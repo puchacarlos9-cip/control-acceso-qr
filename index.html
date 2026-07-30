@@ -1,293 +1,326 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ACCESO SEGURO - Panel de Control</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Control de Acceso</title>
   
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  
-  <!-- Librería del Escáner QR -->
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <!-- Librería para Generar Códigos QR (NUEVO) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  
-  <link rel="stylesheet" href="estilos.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+            }
+          }
+        }
+      }
+    }
+  </script>
 
-  <style>
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  </style>
-
+  <!-- HTML5 QR Code Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
-<body class="bg-zinc-950 text-white min-h-screen overflow-hidden antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white flex flex-col justify-between">
 
-  <!-- TOASTS (Notificaciones) -->
-  <div id="toastContainer" class="fixed top-2 right-2 sm:top-5 sm:right-5 z-[100] space-y-3 pointer-events-none w-[90%] sm:w-auto mx-auto left-0 sm:left-auto"></div>
+  <!-- ========================================== -->
+  <!-- TOAST / NOTIFICACIONES FLOJAS -->
+  <!-- ========================================== -->
+  <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-150%] transition-transform duration-300 ease-in-out bg-slate-800 border border-slate-700 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 max-w-sm pointer-events-none">
+    <span id="toastIcon">ℹ️</span>
+    <span id="toastMessage" class="text-sm font-medium">Notificación</span>
+  </div>
 
-  <!-- PANTALLA DE LOGIN -->
-  <div id="loginScreen" class="min-h-screen flex absolute inset-0 z-50 bg-zinc-950">
-    <div class="hidden lg:flex w-1/2 bg-[url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1200')] bg-cover bg-center relative">
-      <div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/40 to-transparent"></div>
-      <div class="absolute bottom-16 left-16 text-white z-10">
-        <h1 class="text-6xl font-black tracking-wider mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500">ACCESO SEGURO</h1>
-        <p class="text-2xl text-zinc-300 font-light">Gestión y control de ingresos escolar</p>
+  <!-- ========================================== -->
+  <!-- CONTENEDOR PRINCIPAL DE PANTALLAS -->
+  <!-- ========================================== -->
+  <main class="w-full flex-grow flex items-center justify-center p-4">
+
+    <!-- 1. PANTALLA DE SELECCIÓN DE ROL -->
+    <section id="roleScreen" class="w-full max-w-md space-y-6 text-center">
+      <div class="space-y-2">
+        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Sistema de Acceso</h1>
+        <p class="text-slate-400 text-sm">Seleccione su rol para ingresar al sistema</p>
       </div>
-    </div>
-    <div class="flex-1 flex items-center justify-center p-4 sm:p-8 bg-zinc-900/50">
-      <div class="w-full max-w-md bg-zinc-900 p-6 sm:p-10 rounded-3xl border border-zinc-800 shadow-2xl">
-        <div class="mb-8 text-center lg:text-left">
-          <h2 class="text-3xl font-bold mb-2">Iniciar Sesión</h2>
-          <p class="text-zinc-400 text-sm">Ingresa al sistema de control</p>
+
+      <div class="grid grid-cols-1 gap-4 pt-4">
+        <!-- Tarjeta Guardia -->
+        <button 
+          onclick="window.seleccionarRol('guardia')"
+          class="flex items-center p-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 rounded-2xl transition-all duration-200 group text-left shadow-lg">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl mr-4 group-hover:scale-110 transition-transform">
+            👮‍♂️
+          </div>
+          <div>
+            <h2 class="font-bold text-white text-lg">Guardia de Seguridad</h2>
+            <p class="text-slate-400 text-xs">Escáner de QR y verificación por cédula</p>
+          </div>
+        </button>
+
+        <!-- Tarjeta Estudiante -->
+        <button 
+          onclick="window.seleccionarRol('estudiante')"
+          class="flex items-center p-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-blue-500/50 rounded-2xl transition-all duration-200 group text-left shadow-lg">
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl mr-4 group-hover:scale-110 transition-transform">
+            🎓
+          </div>
+          <div>
+            <h2 class="font-bold text-white text-lg">Estudiante</h2>
+            <p class="text-slate-400 text-xs">Consulta de credencial y código QR</p>
+          </div>
+        </button>
+
+        <!-- Tarjeta Administrador -->
+        <button 
+          onclick="window.seleccionarRol('admin')"
+          class="flex items-center p-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 rounded-2xl transition-all duration-200 group text-left shadow-lg">
+          <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-2xl mr-4 group-hover:scale-110 transition-transform">
+            ⚡
+          </div>
+          <div>
+            <h2 class="font-bold text-white text-lg">Administración</h2>
+            <p class="text-slate-400 text-xs">Gestión de estudiantes y registros</p>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. PANTALLA DE LOGIN -->
+    <section id="loginScreen" class="hidden w-full max-w-md space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative">
+        <button onclick="window.volverARoles()" class="absolute top-6 left-6 text-slate-400 hover:text-white transition-colors flex items-center text-sm font-medium">
+          ← Volver
+        </button>
+
+        <div class="text-center mt-6 mb-8 space-y-1">
+          <h2 id="loginTitle" class="text-2xl font-bold text-white">Iniciar Sesión</h2>
+          <p id="loginSubtitle" class="text-xs text-slate-400">Ingrese sus credenciales de acceso</p>
         </div>
-        <div class="space-y-6">
-          <div>
-            <label class="block text-zinc-400 text-sm mb-2 ml-1">Usuario</label>
-            <input id="username" type="text" class="w-full bg-zinc-800/80 border border-zinc-700/60 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:border-emerald-500 transition">
+
+        <form id="loginForm" onsubmit="window.procesarLogin(event)" class="space-y-4">
+          <div class="space-y-1">
+            <label id="labelUsuario" class="text-xs font-semibold text-slate-300">Usuario / Cédula</label>
+            <input 
+              type="text" 
+              id="inputUsuario" 
+              required 
+              placeholder="Ingrese su identificación" 
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            />
           </div>
-          <div>
-            <label class="block text-zinc-400 text-sm mb-2 ml-1">Contraseña</label>
-            <div class="relative">
-              <input id="password" type="password" class="w-full bg-zinc-800/80 border border-zinc-700/60 rounded-2xl px-5 py-4 pr-12 text-lg focus:outline-none focus:border-emerald-500 transition" onkeypress="if(event.key === 'Enter') window.loginSistema()">
-              <button type="button" onclick="window.togglePasswordVisibility()" class="absolute inset-y-0 right-4 flex items-center text-zinc-400 hover:text-emerald-400 transition">
-                <i id="eyeIcon" class="fa-solid fa-eye"></i>
-              </button>
-            </div>
+
+          <div id="grupoPassword" class="space-y-1">
+            <label class="text-xs font-semibold text-slate-300">Contraseña</label>
+            <input 
+              type="password" 
+              id="inputPassword" 
+              placeholder="••••••••" 
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            />
           </div>
-          <button onclick="window.loginSistema()" id="btnLogin" class="w-full bg-gradient-to-r from-emerald-500 to-blue-500 py-4 sm:py-5 rounded-2xl text-lg sm:text-xl font-bold hover:brightness-110 transition shadow-lg">
-            Ingresar
+
+          <button 
+            type="submit" 
+            class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg transition-all duration-200 mt-2">
+            Ingresar al Sistema
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. PANTALLA DEL GUARDIA (PUNTO DE CONTROL) -->
+    <section id="guardScreen" class="hidden w-full max-w-lg space-y-6 text-center">
+      
+      <!-- Ficha de usuario y estado -->
+      <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-4 rounded-2xl">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-xl">
+            👮‍♂️
+          </div>
+          <div class="text-left">
+            <h3 id="guardNameDisplay" class="font-bold text-white text-sm">Cargando...</h3>
+            <p class="text-xs text-slate-400">Guardia de Seguridad</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ● Activo
+          </span>
+          <button onclick="window.cerrarSesion()" class="text-xs text-slate-400 hover:text-rose-400 p-2 transition-colors" title="Cerrar Sesión">
+            🚪
           </button>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- PANTALLA DASHBOARD (Súper Admin / Admin) -->
-  <div id="dashboardScreen" class="hidden h-screen flex-col md:flex-row relative z-40">
-    <aside class="w-full md:w-64 bg-[#121212] border-b md:border-b-0 md:border-r border-zinc-800/50 flex flex-col md:justify-between flex-shrink-0">
-      <div>
-        <div class="p-4 md:p-6 flex items-center justify-between md:justify-start gap-3 md:mb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center">
-              <i class="fa-solid fa-shield-halved text-zinc-950 text-sm"></i>
-            </div>
-            <h2 class="font-black text-lg md:text-xl tracking-wide">ADMIN PANEL</h2>
+      <div class="space-y-1">
+        <h2 class="text-3xl font-extrabold text-white">Punto de Control</h2>
+        <p class="text-slate-400 text-sm">Verifique el estatus de ingreso del alumnado</p>
+      </div>
+
+      <!-- BOTONES DE SELECCIÓN DE VERIFICACIÓN (RESPONSIVE CORREGIDO) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md mx-auto pt-2">
+        
+        <!-- Botón Por Cédula -->
+        <button 
+          onclick="window.openModal('modalBuscarCedula')"
+          class="flex flex-col items-center justify-center p-6 bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-blue-500/40 rounded-2xl transition-all duration-200 shadow-xl group cursor-pointer">
+          <div class="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3 3 0 00-3 3h6a3 3 0 00-3-3z"></path>
+            </svg>
           </div>
-          <button onclick="window.logout()" class="md:hidden text-red-400 px-3 py-2 bg-red-500/10 rounded-lg"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
-        </div>
-        <nav class="flex md:flex-col overflow-x-auto hide-scrollbar space-x-2 md:space-x-0 md:space-y-2 px-3 pb-3 md:pb-0" id="sidebarMenu">
-          <button onclick="window.switchTab('pagos')" id="tab-pagos" class="sidebar-btn whitespace-nowrap w-auto md:w-full flex items-center gap-2 md:gap-4 px-4 py-2.5 md:py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition"><i class="fa-solid fa-credit-card w-5 text-center"></i> Pagos</button>
-          <button onclick="window.switchTab('estudiantes')" id="tab-estudiantes" class="sidebar-btn active whitespace-nowrap w-auto md:w-full flex items-center gap-2 md:gap-4 px-4 py-2.5 md:py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition"><i class="fa-solid fa-users w-5 text-center"></i> Estudiantes</button>
-          <button onclick="window.switchTab('reportes')" id="tab-reportes" class="sidebar-btn whitespace-nowrap w-auto md:w-full flex items-center gap-2 md:gap-4 px-4 py-2.5 md:py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition"><i class="fa-solid fa-chart-pie w-5 text-center"></i> Reportes</button>
-          <button onclick="window.switchTab('usuarios')" id="tab-usuarios" class="sidebar-btn hidden whitespace-nowrap w-auto md:w-full flex items-center gap-2 md:gap-4 px-4 py-2.5 md:py-3 rounded-xl text-purple-400 hover:text-purple-300 hover:bg-purple-900/20 transition"><i class="fa-solid fa-user-shield w-5 text-center"></i> Súper Admin</button>
-        </nav>
-      </div>
-      <div class="hidden md:block p-4">
-        <button onclick="window.logout()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition font-medium"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</button>
-      </div>
-    </aside>
-
-    <main class="flex-1 bg-[#09090b] flex flex-col relative overflow-hidden">
-      <header class="py-4 px-4 md:h-20 border-b border-zinc-800/50 md:px-8 flex flex-col md:flex-row items-start md:items-center justify-between bg-[#121212]/50 gap-3">
-        <h1 id="topbarTitle" class="text-xl md:text-2xl font-bold">Base de Estudiantes</h1>
-        <div id="userBadge" class="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium flex items-center gap-2">
-          <i class="fa-solid fa-circle-check"></i> <span>Sesión iniciada</span>
-        </div>
-      </header>
-
-      <div class="p-4 md:p-8 flex-1 overflow-y-auto">
-        <!-- VISTA ESTUDIANTES -->
-        <div id="view-estudiantes" class="block animate-fade-in">
-          <div class="flex justify-end mb-4 md:mb-6">
-            <button onclick="window.openModal('modalEstudiante')" class="w-full md:w-auto bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition shadow-[0_0_15px_rgba(16,185,129,0.3)]"><i class="fa-solid fa-plus"></i> Registrar Estudiante</button>
-          </div>
-          <div class="bg-[#121212] border border-zinc-800/50 rounded-2xl overflow-x-auto shadow-xl">
-            <table class="w-full min-w-[600px] text-left text-sm text-zinc-400">
-              <thead class="text-xs uppercase bg-zinc-900/50 text-zinc-500 border-b border-zinc-800">
-                <tr><th class="px-6 py-4 font-semibold">Cédula</th><th class="px-6 py-4 font-semibold">Nombre Completo</th><th class="px-6 py-4 font-semibold text-center">Estado Pago</th><th class="px-6 py-4 font-semibold text-center">Acciones</th></tr>
-              </thead>
-              <tbody id="tablaEstudiantesBody" class="divide-y divide-zinc-800/50"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- VISTA USUARIOS -->
-        <div id="view-usuarios" class="hidden animate-fade-in">
-          <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 md:mb-6 gap-4">
-            <p class="text-zinc-400 text-sm md:text-base">Administra quién tiene acceso al sistema.</p>
-            <button onclick="window.openModal('modalUsuario')" class="w-full md:w-auto bg-purple-600 hover:bg-purple-500 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition shadow-[0_0_15px_rgba(147,51,234,0.3)]"><i class="fa-solid fa-user-plus"></i> Nuevo Personal</button>
-          </div>
-          <div class="bg-[#121212] border border-zinc-800/50 rounded-2xl overflow-x-auto shadow-xl">
-            <table class="w-full min-w-[600px] text-left text-sm text-zinc-400">
-              <thead class="text-xs uppercase bg-zinc-900/50 text-zinc-500 border-b border-zinc-800">
-                <tr><th class="px-6 py-4 font-semibold">Personal</th><th class="px-6 py-4 font-semibold">Usuario</th><th class="px-6 py-4 font-semibold text-center">Rol</th><th class="px-6 py-4 font-semibold text-center">Acciones</th></tr>
-              </thead>
-              <tbody id="tablaUsuariosBody" class="divide-y divide-zinc-800/50"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- VISTAS PLACEHOLDERS -->
-        <div id="view-pagos" class="hidden"><h2 class="text-xl text-zinc-500">Próximamente: Panel de Pagos</h2></div>
-        <div id="view-reportes" class="hidden"><h2 class="text-xl text-zinc-500">Próximamente: Panel de Reportes</h2></div>
-      </div>
-    </main>
-  </div>
-
-  <!-- PANTALLA GUARDIA -->
-  <div id="guardScreen" class="hidden min-h-screen bg-[#09090b] text-white flex flex-col items-center p-4 sm:p-6 relative z-40 overflow-y-auto">
-    <div class="w-full max-w-3xl flex justify-end mb-4 mt-2 sm:absolute sm:top-6 sm:right-6 sm:mb-0 sm:mt-0">
-      <div class="bg-emerald-500 text-zinc-950 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)]"><i class="fa-solid fa-circle-check"></i> Guardia Activo</div>
-    </div>
-    <div class="bg-[#18181b] border border-zinc-800/70 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between w-full max-w-3xl mt-4 sm:mt-16 mb-8 sm:mb-16 shadow-xl gap-4">
-      <div class="flex items-center gap-4 w-full sm:w-auto">
-        <div class="w-14 h-14 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl flex items-center justify-center text-2xl shadow-inner flex-shrink-0">👮</div>
-        <div class="overflow-hidden"><h2 id="guardName" class="text-lg sm:text-xl font-bold text-white tracking-wide truncate">...</h2><p id="guardShift" class="text-emerald-400/80 text-xs sm:text-sm font-medium mt-0.5 truncate">...</p></div>
-      </div>
-      <button onclick="window.logout()" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#27272a] hover:bg-red-500/20 text-zinc-300 hover:text-red-400 transition-all duration-300 font-medium"><i class="fa-solid fa-arrow-right-from-bracket"></i> Salir</button>
-    </div>
-    <div class="text-center mb-8 sm:mb-12 px-2">
-      <h1 class="text-3xl sm:text-5xl font-black mb-2 sm:mb-4 tracking-tight">Punto de Control</h1>
-      <p class="text-zinc-400 text-sm sm:text-lg">Verifique el estatus de ingreso del alumnado</p>
-    </div>
-    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full max-w-3xl justify-center">
-      <button onclick="window.openModal('modalBuscarCedula')" class="bg-[#18181b] border border-zinc-800/70 hover:border-blue-500/50 hover:bg-zinc-800/80 transition-all duration-300 rounded-[2rem] p-8 sm:p-10 flex flex-col items-center justify-center w-full sm:w-1/2 aspect-square sm:aspect-[4/3] shadow-lg group">
-        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-[#1f2937] text-blue-400 rounded-3xl flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner"><i class="fa-solid fa-id-card"></i></div>
-        <span class="font-bold text-lg sm:text-xl tracking-wide">Por Cédula</span>
-      </button>
-      <button onclick="window.abrirEscanerQR()" class="bg-[#18181b] border border-zinc-800/70 hover:border-emerald-500/50 hover:bg-zinc-800/80 transition-all duration-300 rounded-[2rem] p-8 sm:p-10 flex flex-col items-center justify-center w-full sm:w-1/2 aspect-square sm:aspect-[4/3] shadow-lg group">
-        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-[#134e4a]/40 text-emerald-400 rounded-3xl flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-inner"><i class="fa-solid fa-qrcode"></i></div>
-        <span class="font-bold text-lg sm:text-xl tracking-wide">Por Código QR</span>
-      </button>
-    </div>
-    <div class="h-10"></div>
-  </div>
-
-  <!-- MODALES DE REGISTRO Y BÚSQUEDA -->
-  <div id="modalEstudiante" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="window.closeModal('modalEstudiante')"></div>
-    <div class="relative bg-[#18181b] border border-zinc-800 w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300 max-h-[95vh] overflow-y-auto">
-      <h3 class="text-xl sm:text-2xl font-bold text-emerald-400 mb-6 flex items-center gap-2"><i class="fa-solid fa-user-plus"></i> Registrar Alumno</h3>
-      <div class="space-y-4">
-        <div><label class="block text-zinc-400 text-xs mb-1 ml-1">Nombre</label><input id="estNombre" type="text" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500"></div>
-        <div><label class="block text-zinc-400 text-xs mb-1 ml-1">Apellidos</label><input id="estApellidos" type="text" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500"></div>
-        <div><label class="block text-zinc-400 text-xs mb-1 ml-1">Cédula</label><input id="estCedula" type="number" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500"></div>
-        <div>
-          <label class="block text-zinc-400 text-xs mb-1 ml-1">Estado de Pago Inicial</label>
-          <select id="estEstado" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500">
-            <option value="Pagado">Pagado (Acceso Libre)</option><option value="Pendiente">Pendiente (Bloqueado)</option>
-          </select>
-        </div>
-      </div>
-      <div class="mt-6 sm:mt-8 flex flex-col-reverse sm:flex-row gap-3">
-        <button onclick="window.closeModal('modalEstudiante')" class="w-full sm:flex-1 bg-[#27272a] hover:bg-[#3f3f46] text-white py-3 rounded-xl transition font-medium">Cancelar</button>
-        <button onclick="window.guardarEstudiante()" id="btnGuardarEst" class="w-full sm:flex-1 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 py-3 rounded-xl transition font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)]">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="modalUsuario" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="window.closeModal('modalUsuario')"></div>
-    <div class="relative bg-[#18181b] border border-zinc-800 w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300 max-h-[95vh] overflow-y-auto">
-      <h3 class="text-xl sm:text-2xl font-bold text-purple-400 mb-6 flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> Registrar Personal</h3>
-      <div class="space-y-4">
-        <div><label class="block text-zinc-400 text-xs mb-1 ml-1">Nombre Completo</label><input id="usrNombre" type="text" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500"></div>
-        <div><label class="block text-zinc-400 text-xs mb-1 ml-1">Usuario</label><input id="usrUsuario" type="text" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500"></div>
-        <div><label class="block text-zinc-400 text-xs mb-1 ml-1">Contraseña</label><input id="usrPassword" type="password" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500"></div>
-        <div><label class="block text-zinc-400 text-xs mb-1 ml-1">Rol</label><select id="usrRol" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" onchange="window.toggleTurno()"><option value="guardia">Guardia</option><option value="admin">Administrador</option><option value="super_admin">Súper Admin</option></select></div>
-        <div id="turnoContainer" class="block"><label class="block text-zinc-400 text-xs mb-1 ml-1">Turno</label><select id="usrTurno" class="w-full bg-[#27272a]/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500"><option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Nocturno">Nocturno</option></select></div>
-      </div>
-      <div class="mt-6 sm:mt-8 flex flex-col-reverse sm:flex-row gap-3">
-        <button onclick="window.closeModal('modalUsuario')" class="w-full sm:flex-1 bg-[#27272a] hover:bg-[#3f3f46] text-white py-3 rounded-xl transition font-medium">Cancelar</button>
-        <button onclick="window.guardarUsuario()" id="btnGuardarUsr" class="w-full sm:flex-1 bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl transition font-bold shadow-[0_0_15px_rgba(147,51,234,0.2)]">Crear Cuenta</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="modalBuscarCedula" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="window.closeModal('modalBuscarCedula')"></div>
-    <div class="relative bg-[#18181b] border border-zinc-800 w-full max-w-sm p-6 sm:p-8 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300">
-      <div class="text-center mb-6">
-        <div class="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4"><i class="fa-solid fa-id-card"></i></div>
-        <h3 class="text-xl sm:text-2xl font-bold text-white">Ingresar Cédula</h3>
-        <p class="text-zinc-400 text-sm mt-1">Escriba el número de identificación.</p>
-      </div>
-      <input id="inputBusquedaCedula" type="number" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-4 text-center text-xl sm:text-2xl tracking-widest text-white focus:outline-none focus:border-blue-500 mb-6" placeholder="0000000000">
-      <div class="flex flex-col-reverse sm:flex-row gap-3">
-        <button onclick="window.closeModal('modalBuscarCedula')" class="w-full sm:flex-1 bg-[#27272a] hover:bg-[#3f3f46] text-white py-3 rounded-xl transition font-medium">Cancelar</button>
-        <button onclick="window.verificarAccesoCedula()" id="btnVerificarCedula" class="w-full sm:flex-1 bg-blue-500 hover:bg-blue-400 text-white py-3 rounded-xl transition font-bold">Verificar</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="modalEscanerQR" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" onclick="window.cerrarEscanerQR()"></div>
-    <div class="relative bg-[#18181b] border border-zinc-800 w-full max-w-md p-5 sm:p-6 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col items-center">
-      <h3 class="text-xl sm:text-2xl font-bold text-emerald-400 mb-2 sm:mb-4 flex items-center gap-2"><i class="fa-solid fa-camera"></i> Escanear QR</h3>
-      <p class="text-zinc-400 text-xs sm:text-sm text-center mb-4">Apunta la cámara hacia el código QR.</p>
-      <div id="lectorQR" class="w-full bg-black rounded-2xl overflow-hidden border-2 border-zinc-700/50 mb-6 min-h-[250px] sm:min-h-[300px] flex items-center justify-center"></div>
-      <button onclick="window.cerrarEscanerQR()" class="w-full bg-[#27272a] hover:bg-red-500/20 text-white hover:text-red-400 border border-zinc-700/50 hover:border-red-500/50 py-3 rounded-xl transition font-bold">Cancelar</button>
-    </div>
-  </div>
-
-  <div id="modalResultado" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/90 backdrop-blur-md" onclick="window.closeModal('modalResultado')"></div>
-    <div class="relative bg-[#18181b] border border-zinc-800 w-full max-w-sm p-6 sm:p-8 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300 text-center">
-      <div id="resultadoIcono" class="mb-4"></div>
-      <h3 id="resultadoTitulo" class="text-2xl sm:text-3xl font-black mb-2 mt-4">TITULO</h3>
-      <div id="resultadoDesc" class="mt-4 mb-6 sm:mb-8 text-sm sm:text-base">Descripción</div>
-      <button onclick="window.closeModal('modalResultado')" class="w-full bg-[#27272a] hover:bg-[#3f3f46] text-white py-3 sm:py-4 rounded-xl transition font-bold text-lg">Cerrar</button>
-    </div>
-  </div>
-
-  <!-- MODAL: VER Y DESCARGAR QR (NUEVO) -->
-  <div id="modalVerQR" class="fixed inset-0 z-[115] hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" onclick="window.closeModal('modalVerQR')"></div>
-    <div class="relative bg-[#18181b] border border-zinc-800 w-full max-w-sm p-6 sm:p-8 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300 text-center">
-      <h3 class="text-xl font-bold text-emerald-400 mb-1">Código de Acceso</h3>
-      <p id="qrNombreAlumno" class="text-white font-medium mb-6 uppercase">Nombre Alumno</p>
-      
-      <!-- Contenedor donde la librería dibujará el QR -->
-      <div class="bg-white p-4 rounded-2xl inline-block mb-6 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-          <div id="qrContenedor"></div>
-      </div>
-      
-      <div class="flex flex-col gap-3">
-        <button onclick="window.descargarQR()" class="w-full bg-blue-500 hover:bg-blue-400 text-white py-3 rounded-xl transition font-bold flex items-center justify-center gap-2 shadow-lg">
-          <i class="fa-solid fa-download"></i> Descargar Imagen
+          <span class="text-base font-bold text-white">Por Cédula</span>
         </button>
-        <button onclick="window.closeModal('modalVerQR')" class="w-full bg-[#27272a] hover:bg-[#3f3f46] text-white py-3 rounded-xl transition font-medium">Cerrar</button>
+
+        <!-- Botón Por Código QR -->
+        <button 
+          onclick="window.abrirEscanerQR()"
+          class="flex flex-col items-center justify-center p-6 bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-500/40 rounded-2xl transition-all duration-200 shadow-xl group cursor-pointer">
+          <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+            </svg>
+          </div>
+          <span class="text-base font-bold text-white">Por Código QR</span>
+        </button>
+
       </div>
-    </div>
-  </div>
-  <!-- Modal de Confirmación para Eliminar (Nuevo Diseño) -->
-  <div id="modalConfirmacion" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center transition-all">
-    <div class="bg-zinc-900 border border-zinc-800 w-[90%] max-w-sm rounded-3xl p-6 transform scale-95 transition-transform shadow-2xl">
-        <div class="text-center">
-            <!-- Icono de advertencia -->
-            <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 border border-red-500/20">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            
-            <h3 class="text-xl font-bold text-white mb-2">¿Estás seguro?</h3>
-            <p id="textoConfirmacion" class="text-zinc-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
-            
-            <!-- Botones -->
-            <div class="flex gap-3">
-                <button onclick="window.cancelarConfirmacion()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-3 rounded-xl transition">
-                    Cancelar
-                </button>
-                <button onclick="window.ejecutarConfirmacion()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl transition">
-                    Sí, Eliminar
-                </button>
-            </div>
+    </section>
+
+    <!-- 4. PANTALLA DEL ESTUDIANTE -->
+    <section id="studentScreen" class="hidden w-full max-w-md space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6">
+        <button onclick="window.cerrarSesion()" class="absolute top-6 right-6 text-xs text-slate-400 hover:text-white transition-colors">
+          Cerrar Sesión 🚪
+        </button>
+
+        <div>
+          <h2 id="studentNameDisplay" class="text-2xl font-bold text-white">Nombre Estudiante</h2>
+          <p id="studentCedulaDisplay" class="text-xs text-slate-400 mt-1">Cédula: -</p>
         </div>
+
+        <div class="flex justify-center">
+          <div id="studentStatusBadge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ● Activo / Al día
+          </div>
+        </div>
+
+        <!-- Contenedor del Código QR -->
+        <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mx-auto">
+          <div id="qrcode" class="flex justify-center"></div>
+        </div>
+
+        <p class="text-xs text-slate-400">Presente este código QR en la garita para ingresar al establecimiento.</p>
+      </div>
+    </section>
+
+    <!-- 5. PANTALLA DE ADMINISTRACIÓN -->
+    <section id="adminScreen" class="hidden w-full max-w-4xl space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Panel de Administración</h2>
+          <p class="text-xs text-slate-400">Gestión de accesos y estudiantes</p>
+        </div>
+        <button onclick="window.cerrarSesion()" class="bg-slate-800 hover:bg-slate-700 text-xs text-white px-4 py-2 rounded-xl transition-colors">
+          Cerrar Sesión 🚪
+        </button>
+      </div>
+
+      <!-- Tabla / Registros -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h3 class="text-lg font-bold text-white mb-4">Últimos Accesos Registrados</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase font-semibold">
+              <tr>
+                <th class="p-3 rounded-l-lg">Estudiante</th>
+                <th class="p-3">Cédula</th>
+                <th class="p-3">Método</th>
+                <th class="p-3">Estado</th>
+                <th class="p-3 rounded-r-lg">Fecha / Hora</th>
+              </tr>
+            </thead>
+            <tbody id="tablaAccesos" class="divide-y divide-slate-800/50">
+              <tr>
+                <td colspan="5" class="p-4 text-center text-slate-500">Cargando registros...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODALES DE INTERACCIÓN -->
+  <!-- ========================================== -->
+
+  <!-- MODAL: BÚSQUEDA POR CÉDULA -->
+  <div id="modalBuscarCedula" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white">Buscar por Cédula</h3>
+        <button onclick="window.closeModal('modalBuscarCedula')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <form onsubmit="window.buscarPorCedula(event)" class="space-y-4">
+        <input 
+          type="text" 
+          id="inputCedulaBuscar" 
+          required 
+          placeholder="Ingrese número de cédula" 
+          class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+        />
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-colors">
+          Buscar Estudiante
+        </button>
+      </form>
     </div>
   </div>
 
-  <!-- SCRIPT -->
-  <script type="module" src="app.js"></script>
+  <!-- MODAL: ESCÁNER QR (OPTIMIZADO CÁMARA) -->
+  <div id="modalEscanerQR" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 text-center">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white">Escanear Código QR</h3>
+        <button onclick="window.cerrarEscanerQR()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
 
+      <div class="overflow-hidden rounded-2xl bg-black border border-slate-800">
+        <div id="lectorQR" class="w-full min-h-[260px]"></div>
+      </div>
+
+      <p class="text-xs text-slate-400">Apunte la cámara del dispositivo al código QR del estudiante.</p>
+      
+      <button onclick="window.cerrarEscanerQR()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl transition-colors text-sm">
+        Cancelar / Cerrar
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: RESULTADO DEL ACCESO -->
+  <div id="modalResultado" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl text-center space-y-4">
+      <div id="resultadoIcono" class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mx-auto"></div>
+      <h3 id="resultadoTitulo" class="text-2xl font-black"></h3>
+      <p id="resultadoNombre" class="text-lg font-bold text-white"></p>
+      <p id="resultadoMensaje" class="text-xs text-slate-400"></p>
+      
+      <button onclick="window.closeModal('modalResultado')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-colors mt-2">
+        Aceptar / Continuar
+      </button>
+    </div>
+  </div>
+
+  <!-- Script Principal -->
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

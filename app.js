@@ -131,7 +131,6 @@ window.procesarLogin = async function(event) {
           document.getElementById('studentNameDisplay').innerText = `${est.nombre} ${est.apellidos}`;
           document.getElementById('studentCedulaDisplay').innerText = `Cédula: ${est.cedula}`;
           
-          // Generar QR de credencial
           const qrContenedor = document.getElementById('qrcode');
           qrContenedor.innerHTML = "";
           new QRCode(qrContenedor, {
@@ -214,7 +213,6 @@ window.escanerQR = null;
 window.abrirEscanerQR = function() {
   window.openModal('modalEscanerQR');
   
-  // Margen de tiempo para asegurar renderizado en pantallas móviles
   setTimeout(() => {
     const contenedor = document.getElementById('lectorQR');
     if (!contenedor) return;

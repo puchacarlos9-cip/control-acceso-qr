@@ -2,12 +2,12 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
 /* Barra de desplazamiento (Scrollbar) */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #18181b; }
-::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #52525b; }
+::-webkit-scrollbar-track { background: #090d16; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #334155; }
 
 /* Estilos de botones activos en el menú izquierdo */
-.sidebar-btn.active { background-color: #27272a; color: white; border-left: 4px solid #10b981; }
+.sidebar-btn.active { background-color: #1e293b; color: white; border-left: 4px solid #10b981; }
 .sidebar-btn.active-purple { background-color: rgba(88, 28, 135, 0.2); color: #d8b4fe; border-left: 4px solid #a855f7; }
 
 /* Animaciones */
@@ -21,16 +21,11 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 /* FIX PARA MÓVILES: MOSTRAR BOTÓN LECTOR QR */
 /* ========================================= */
 @media (max-width: 768px) {
-    /* Forzar a que el botón del escáner y la cédula sean visibles en celular siempre */
     #btn-abrir-escaner, 
     #btn-buscar-cedula,
     .tarjeta-opcion {
         display: flex !important;
-        width: 100% !important; /* Para que ocupen todo el ancho del celular */
-        margin-bottom: 15px; /* Separación entre ambos botones */
+        width: 100% !important;
+        margin-bottom: 12px;
     }
 }
-
-
-
-

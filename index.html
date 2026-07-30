@@ -1,9 +1,10 @@
+HTML
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sistema de Control de Acceso</title>
+  <title>Sistema de Control de Acceso ISTDAB</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,13 +26,17 @@
     }
   </script>
 
-  <!-- HTML5 QR Code Scanner Library -->
+  <!-- Archivo de estilos personalizados -->
+  <link rel="stylesheet" href="./estilos.css">
+
+  <!-- HTML5 QR Code Scanner & QR Code Generator -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white flex flex-col justify-between">
 
   <!-- ========================================== -->
-  <!-- TOAST / NOTIFICACIONES FLOJAS -->
+  <!-- TOAST / NOTIFICACIONES -->
   <!-- ========================================== -->
   <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-150%] transition-transform duration-300 ease-in-out bg-slate-800 border border-slate-700 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 max-w-sm pointer-events-none">
     <span id="toastIcon">ℹ️</span>
@@ -46,7 +51,7 @@
     <!-- 1. PANTALLA DE SELECCIÓN DE ROL -->
     <section id="roleScreen" class="w-full max-w-md space-y-6 text-center">
       <div class="space-y-2">
-        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Sistema de Acceso</h1>
+        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Sistema de Acceso ISTDAB</h1>
         <p class="text-slate-400 text-sm">Seleccione su rol para ingresar al sistema</p>
       </div>
 
@@ -164,7 +169,7 @@
         <p class="text-slate-400 text-sm">Verifique el estatus de ingreso del alumnado</p>
       </div>
 
-      <!-- BOTONES DE SELECCIÓN DE VERIFICACIÓN (CORREGIDO PARA MÓVILES) -->
+      <!-- BOTONES DE SELECCIÓN DE VERIFICACIÓN (RESPONSIVE FIX) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md mx-auto pt-2">
         
         <!-- Botón Por Cédula -->
@@ -288,7 +293,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ESCÁNER QR (OPTIMIZADO CÁMARA) -->
+  <!-- MODAL: ESCÁNER QR -->
   <div id="modalEscanerQR" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 text-center">
       <div class="flex items-center justify-between">
@@ -326,4 +331,3 @@
   <script type="module" src="./app.js"></script>
 </body>
 </html>
-

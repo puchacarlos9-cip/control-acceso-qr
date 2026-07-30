@@ -2,7 +2,7 @@
 <html lang="es" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Sistema de Control de Acceso ISTDAB</title>
   
   <!-- Tailwind CSS CDN -->
@@ -26,13 +26,13 @@
   </script>
 
   <!-- Archivo de estilos personalizados -->
-  <link rel="stylesheet" href="./estilos.css">
+  <link rel="stylesheet" href="./estilos.css?v=2.0">
 
   <!-- HTML5 QR Code Scanner & QR Code Generator -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white flex flex-col justify-between">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-y-auto selection:bg-emerald-500 selection:text-white">
 
   <!-- ========================================== -->
   <!-- TOAST / NOTIFICACIONES -->
@@ -45,10 +45,10 @@
   <!-- ========================================== -->
   <!-- CONTENEDOR PRINCIPAL DE PANTALLAS -->
   <!-- ========================================== -->
-  <main class="w-full flex-grow flex items-center justify-center p-4">
+  <main class="w-full flex-grow flex flex-col justify-start sm:justify-center items-center p-4 py-6">
 
     <!-- 1. PANTALLA DE SELECCIÓN DE ROL -->
-    <section id="roleScreen" class="w-full max-w-md space-y-6 text-center">
+    <section id="roleScreen" class="w-full max-w-md space-y-6 text-center my-auto">
       <div class="space-y-2">
         <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Sistema de Acceso ISTDAB</h1>
         <p class="text-slate-400 text-sm">Seleccione su rol para ingresar al sistema</p>
@@ -97,7 +97,7 @@
     </section>
 
     <!-- 2. PANTALLA DE LOGIN -->
-    <section id="loginScreen" class="hidden w-full max-w-md space-y-6">
+    <section id="loginScreen" class="hidden w-full max-w-md space-y-6 my-auto">
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative">
         <button onclick="window.volverARoles()" class="absolute top-6 left-6 text-slate-400 hover:text-white transition-colors flex items-center text-sm font-medium">
           ← Volver
@@ -139,45 +139,45 @@
       </div>
     </section>
 
-    <!-- 3. PANTALLA DEL GUARDIA (PUNTO DE CONTROL CORREGIDA) -->
-    <section id="guardScreen" class="hidden w-full max-w-xl space-y-4 text-center mx-auto pb-10 px-2">
+    <!-- 3. PANTALLA DEL GUARDIA -->
+    <section id="guardScreen" class="hidden w-full max-w-md space-y-4 text-center mx-auto my-auto">
       
       <!-- Ficha de usuario y estado -->
-      <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-md">
+      <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-3 sm:p-4 rounded-2xl shadow-md">
         <div class="flex items-center space-x-3">
           <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-xl">
             👮‍♂️
           </div>
           <div class="text-left">
             <h3 id="guardNameDisplay" class="font-bold text-white text-sm">israel pucha</h3>
-            <p class="text-xs text-slate-400">Guardia de Seguridad • Vespertino</p>
+            <p class="text-xs text-slate-400">Guardia de Seguridad</p>
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            ✓ Guardia Activo
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ Activo
           </span>
-          <button onclick="window.cerrarSesion()" class="text-xs text-slate-400 hover:text-rose-400 p-2 transition-colors" title="Cerrar Sesión">
-            🚪 Salir
+          <button onclick="window.cerrarSesion()" class="text-xs text-slate-400 hover:text-rose-400 p-1.5 transition-colors" title="Cerrar Sesión">
+            🚪
           </button>
         </div>
       </div>
 
-      <div class="space-y-1 pt-2">
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Punto de Control</h2>
-        <p class="text-slate-400 text-xs sm:text-sm">Verifique el estatus de ingreso del alumnado</p>
+      <div class="space-y-1">
+        <h2 class="text-2xl font-extrabold text-white">Punto de Control</h2>
+        <p class="text-slate-400 text-xs">Verifique el estatus de ingreso del alumnado</p>
       </div>
 
-      <!-- BOTONES DE SELECCIÓN (COMPACTOS Y ADAPTABLES) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full pt-2">
+      <!-- BOTONES DE SELECCIÓN EN FORMATO LISTA MÓVIL COMPACTA -->
+      <div class="flex flex-col sm:grid sm:grid-cols-2 gap-3 w-full pt-1">
         
         <!-- Botón Por Cédula -->
         <button 
           id="btn-buscar-cedula"
           onclick="window.openModal('modalBuscarCedula')"
-          class="tarjeta-opcion flex flex-row sm:flex-col items-center justify-start sm:justify-center p-4 sm:p-6 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-blue-500/40 rounded-2xl transition-all shadow-lg group cursor-pointer w-full space-x-4 sm:space-x-0">
-          <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center sm:mb-3 flex-shrink-0">
-            <svg class="w-7 h-7 sm:w-8 sm:h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="tarjeta-opcion flex items-center justify-start p-3 sm:p-5 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-blue-500/40 rounded-2xl transition-all shadow-lg group cursor-pointer w-full space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3 3 0 00-3 3h6a3 3 0 00-3-3z"></path>
             </svg>
           </div>
@@ -188,9 +188,9 @@
         <button 
           id="btn-abrir-escaner"
           onclick="window.abrirEscanerQR()"
-          class="tarjeta-opcion flex flex-row sm:flex-col items-center justify-start sm:justify-center p-4 sm:p-6 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-2xl transition-all shadow-lg group cursor-pointer w-full space-x-4 sm:space-x-0">
-          <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center sm:mb-3 flex-shrink-0">
-            <svg class="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="tarjeta-opcion flex items-center justify-start p-3 sm:p-5 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-2xl transition-all shadow-lg group cursor-pointer w-full space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
             </svg>
           </div>
@@ -201,7 +201,7 @@
     </section>
 
     <!-- 4. PANTALLA DEL ESTUDIANTE -->
-    <section id="studentScreen" class="hidden w-full max-w-md space-y-6">
+    <section id="studentScreen" class="hidden w-full max-w-md space-y-6 my-auto">
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6">
         <button onclick="window.cerrarSesion()" class="absolute top-6 right-6 text-xs text-slate-400 hover:text-white transition-colors">
           Cerrar Sesión 🚪
@@ -228,7 +228,7 @@
     </section>
 
     <!-- 5. PANTALLA DE ADMINISTRACIÓN -->
-    <section id="adminScreen" class="hidden w-full max-w-4xl space-y-6">
+    <section id="adminScreen" class="hidden w-full max-w-4xl space-y-6 my-auto">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-2xl font-bold text-white">Panel de Administración</h2>
@@ -265,11 +265,7 @@
 
   </main>
 
-  <!-- ========================================== -->
   <!-- MODALES DE INTERACCIÓN -->
-  <!-- ========================================== -->
-
-  <!-- MODAL: BÚSQUEDA POR CÉDULA -->
   <div id="modalBuscarCedula" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5">
       <div class="flex items-center justify-between">
@@ -292,7 +288,6 @@
     </div>
   </div>
 
-  <!-- MODAL: ESCÁNER QR -->
   <div id="modalEscanerQR" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 text-center">
       <div class="flex items-center justify-between">
@@ -312,7 +307,6 @@
     </div>
   </div>
 
-  <!-- MODAL: RESULTADO DEL ACCESO -->
   <div id="modalResultado" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl text-center space-y-4">
       <div id="resultadoIcono" class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mx-auto"></div>
@@ -326,7 +320,6 @@
     </div>
   </div>
 
-  <!-- Script Principal -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>

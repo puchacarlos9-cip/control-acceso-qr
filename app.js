@@ -384,36 +384,59 @@ window.eliminarUsuario = function(docId) {
 window.escanerQR = null;
 
 window.abrirEscanerQR = function() {
+  // 1. Primero abrimos el modal
   window.openModal('modalEscanerQR');
   
-  window.escanerQR = new Html5Qrcode("lectorQR");
-  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-  
-  window.escanerQR.start(
-    { facingMode: "environment" }, 
-    config,
-    window.onEscaneoExitoso,
-    window.onEscaneoFallido
-  ).catch((error) => {
-    window.showToast("No se pudo acceder a la cámara o no hay permisos", "error");
-  });
+  // 2. Le damos 300ms de margen para que la pantalla del celular termine la animación del modal
+  setTimeout(() => {
+    const contenedor = document.getElementById('lectorQR');
+    if (!contenedor) return;
+    
+    // Limpiamos cualquier residuo previo
+    contenedor.innerHTML = "";
+
+    // Si ya había una instancia viva, la detenemos
+    if (window.escanerQR) {
+      try { window.escanerQR.clear(); } catch(e) {}
+    }
+
+    window.escanerQR = new Html5Qrcode("lectorQR");
+    const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+    
+    window.escanerQR.start(
+      { facingMode: "environment" }, 
+      config,
+      window.onEscaneoExitoso,
+      window.onEscaneoFallido
+    ).catch((error) => {
+      console.error("Error al iniciar cámara:", error);
+      window.showToast("No se pudo acceder a la cámara. Asegúrate de dar permisos.", "error");
+    });
+  }, 300);
 };
 
 window.cerrarEscanerQR = function() {
   if (window.escanerQR) {
     window.escanerQR.stop().then(() => {
       window.escanerQR.clear();
-    }).catch(err => console.log("Error apagando cámara", err));
+      window.closeModal('modalEscanerQR');
+    }).catch(err => {
+      console.log("Error o cámara ya apagada", err);
+      window.closeModal('modalEscanerQR');
+    });
+  } else {
+    window.closeModal('modalEscanerQR');
   }
-  window.closeModal('modalEscanerQR');
 };
 
 window.onEscaneoFallido = function(error) {};
 
 window.onEscaneoExitoso = async function(uuidDecodificado) {
   if (window.escanerQR) {
-    await window.escanerQR.stop();
-    window.escanerQR.clear();
+    try {
+      await window.escanerQR.stop();
+      window.escanerQR.clear();
+    } catch(e) {}
   }
   window.closeModal('modalEscanerQR');
   

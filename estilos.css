@@ -17,15 +17,13 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
   to { opacity: 1; transform: translateY(0); } 
 }
 
-/* ========================================= */
-/* FIX PARA MÓVILES: MOSTRAR BOTÓN LECTOR QR */
-/* ========================================= */
-@media (max-width: 768px) {
-    #btn-abrir-escaner, 
-    #btn-buscar-cedula,
-    .tarjeta-opcion {
-        display: flex !important;
-        width: 100% !important;
-        margin-bottom: 12px;
-    }
+/* ======================================================= */
+/* FIX PARA MÓVILES: CORRECCIÓN DE ALTURA DE LAS TARJETAS  */
+/* ======================================================= */
+@media (max-width: 640px) {
+  .tarjeta-opcion {
+    min-height: 72px !important;
+    height: auto !important;
+    max-height: 90px !important;
+  }
 }

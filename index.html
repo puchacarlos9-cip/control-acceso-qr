@@ -98,17 +98,24 @@
         
         <!-- VISTA ESTUDIANTES -->
         <div id="view-estudiantes" class="block animate-fade-in w-full">
-          <div class="flex justify-end mb-4 w-full">
-            <button onclick="window.openModal('modalEstudiante')" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap">
-              <i class="fa-solid fa-plus"></i> Registrar Estudiante
+          
+          <!-- Controles Superiores: Título y Botón alineados -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 w-full">
+            <div>
+              <h2 class="text-lg font-semibold text-zinc-200">Gestión de Alumnos</h2>
+              <p class="text-sm text-zinc-500">Visualiza y administra los registros de la base de datos.</p>
+            </div>
+            
+            <button onclick="window.openModal('modalEstudiante')" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition shadow-[0_0_15px_rgba(16,185,129,0.2)] whitespace-nowrap">
+              <i class="fa-solid fa-user-plus"></i> Registrar Estudiante
             </button>
           </div>
           
-          <!-- Contenedor principal de la tabla con scroll horizontal -->
-          <div class="bg-[#121212] border border-zinc-800/50 rounded-2xl shadow-xl w-full max-w-full overflow-hidden">
+          <!-- Contenedor de la Tabla Estilizado -->
+          <div class="bg-[#121212]/80 border border-zinc-800/60 rounded-2xl shadow-lg w-full max-w-full overflow-hidden">
             <div class="w-full overflow-x-auto hide-scrollbar">
               <table class="w-full min-w-[700px] text-left text-sm text-zinc-400">
-                <thead class="text-xs uppercase bg-zinc-900/50 text-zinc-500 border-b border-zinc-800">
+                <thead class="text-xs uppercase bg-zinc-900/90 text-zinc-500 border-b border-zinc-800/80">
                   <tr>
                     <th scope="col" class="px-6 py-4 font-semibold whitespace-nowrap">Cédula</th>
                     <th scope="col" class="px-6 py-4 font-semibold whitespace-nowrap">Nombre Completo</th>
@@ -116,12 +123,13 @@
                     <th scope="col" class="px-6 py-4 font-semibold text-center whitespace-nowrap">Acciones</th>
                   </tr>
                 </thead>
-                <tbody id="tablaEstudiantesBody" class="divide-y divide-zinc-800/50">
+                <tbody id="tablaEstudiantesBody" class="divide-y divide-zinc-800/40">
                   <!-- El contenido se inyecta por JS -->
                 </tbody>
               </table>
             </div>
           </div>
+          
         </div>
 
         <!-- VISTA USUARIOS -->

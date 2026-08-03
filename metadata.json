@@ -1,0 +1,10 @@
+{
+  "name": "Acceso Seguro - Control de Acceso QR",
+  "description": "Sistema responsive de control de acceso escolar y de campus mediante código QR y cédula con paneles de guardia, administrador y súper administrador.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

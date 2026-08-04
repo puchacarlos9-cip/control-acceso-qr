@@ -1,6 +1,7 @@
 export type RolUsuario = 'super_admin' | 'admin' | 'guardia';
 export type TurnoGuardia = 'Matutino' | 'Vespertino' | 'Nocturno' | 'Turno General';
 export type EstadoPago = 'Pagado' | 'Pendiente';
+export type EstadoAptoMedico = 'Apto' | 'Pendiente' | 'Vencido';
 export type MetodoAcceso = 'QR' | 'Cédula';
 export type EstadoIngreso = 'Permitido' | 'Denegado';
 
@@ -22,7 +23,12 @@ export interface Estudiante {
   estado_pago: EstadoPago;
   qr_uuid: string;
   fecha_registro?: string;
-  curso?: string;
+  curso?: string; // Mantener retrocompatibilidad o Disciplina
+  disciplina?: string;
+  categoria?: string;
+  entrenador?: string;
+  apto_medico?: EstadoAptoMedico;
+  contacto_emergencia?: string;
 }
 
 export interface AccesoLog {
@@ -34,6 +40,8 @@ export interface AccesoLog {
   estado_ingreso: EstadoIngreso;
   metodo: MetodoAcceso;
   motivo?: string;
+  disciplina?: string;
+  zona_acceso?: string;
 }
 
 export interface ToastMessage {

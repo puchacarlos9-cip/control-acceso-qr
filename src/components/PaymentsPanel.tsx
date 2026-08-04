@@ -7,8 +7,9 @@ import {
   AlertCircle,
   TrendingUp,
   Users,
+  Trophy,
   DollarSign,
-  Filter,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface PaymentsPanelProps {
@@ -30,10 +31,12 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
 
   const filtered = estudiantes.filter((est) => {
     const term = searchTerm.toLowerCase().trim();
+    const disc = (est.disciplina || est.curso || '').toLowerCase();
     const matchSearch =
       est.nombre.toLowerCase().includes(term) ||
       est.apellidos.toLowerCase().includes(term) ||
-      est.cedula.includes(term);
+      est.cedula.includes(term) ||
+      disc.includes(term);
     if (filter === 'todos') return matchSearch;
     return matchSearch && est.estado_pago === filter;
   });
@@ -46,16 +49,16 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <CreditCard className="w-6 h-6 text-emerald-400" />
-              <span>Estado de Pensiones y Matrícula</span>
+              <span>Membresías & Cuotas Deportivas</span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Control financiero en tiempo real. Los estudiantes en estado <span className="text-emerald-400 font-bold">Pagado</span> tienen acceso habilitado en los puntos QR.
+              Control financiero del club/complejo deportivo. Los atletas en estado <span className="text-emerald-400 font-bold">Cuota al Día</span> tienen habilitado el paso en los torniquetes QR.
             </p>
           </div>
           <div className="bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-2xl flex items-center gap-3">
             <TrendingUp className="w-5 h-5 text-emerald-400" />
             <div>
-              <div className="text-xs text-zinc-400 font-semibold">Tasa de Pago</div>
+              <div className="text-xs text-zinc-400 font-semibold">Solvencia Deportiva</div>
               <div className="text-lg font-black text-white">{percent}%</div>
             </div>
           </div>
@@ -70,11 +73,11 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
         </div>
       </div>
 
-      {/* Stats row - Responsive grid */}
+      {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-[#121212]/80 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <span className="text-xs text-zinc-400 font-semibold uppercase">Total Alumnos</span>
+            <span className="text-xs text-zinc-400 font-semibold uppercase">Total Atletas</span>
             <div className="text-2xl font-black text-white mt-0.5">{total}</div>
           </div>
           <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
@@ -84,7 +87,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
 
         <div className="bg-[#121212]/80 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <span className="text-xs text-emerald-400 font-semibold uppercase">Al Día (Pagados)</span>
+            <span className="text-xs text-emerald-400 font-semibold uppercase">Cuota Al Día (Habilitados)</span>
             <div className="text-2xl font-black text-emerald-400 mt-0.5">{pagados}</div>
           </div>
           <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
@@ -94,7 +97,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
 
         <div className="bg-[#121212]/80 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <span className="text-xs text-red-400 font-semibold uppercase">Pendientes / Bloqueados</span>
+            <span className="text-xs text-red-400 font-semibold uppercase">En Mora (Bloqueados)</span>
             <div className="text-2xl font-black text-red-400 mt-0.5">{pendientes}</div>
           </div>
           <div className="w-11 h-11 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center">
@@ -111,8 +114,8 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nombre, apellido o cédula..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition placeholder:text-zinc-600"
+            placeholder="Buscar deportista por nombre, cédula o disciplina..."
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition placeholder:text-zinc-600"
           />
         </div>
 
@@ -133,7 +136,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            Pagados ({pagados})
+            Al Día ({pagados})
           </button>
           <button
             onClick={() => setFilter('Pendiente')}
@@ -143,7 +146,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            Pendientes ({pendientes})
+            En Mora ({pendientes})
           </button>
         </div>
       </div>
@@ -155,18 +158,18 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
           <table className="w-full text-left text-sm text-zinc-300">
             <thead className="text-xs uppercase bg-zinc-900/80 text-zinc-500 border-b border-zinc-800">
               <tr>
-                <th className="px-6 py-4 font-semibold">Estudiante</th>
+                <th className="px-6 py-4 font-semibold">Atleta / Socio</th>
                 <th className="px-6 py-4 font-semibold">Cédula</th>
-                <th className="px-6 py-4 font-semibold">Carrera</th>
-                <th className="px-6 py-4 font-semibold text-center">Estado Actual</th>
-                <th className="px-6 py-4 font-semibold text-right">Acción Rápida</th>
+                <th className="px-6 py-4 font-semibold">Disciplina & Categoría</th>
+                <th className="px-6 py-4 font-semibold text-center">Estado Membresía</th>
+                <th className="px-6 py-4 font-semibold text-right">Actualizar Cuota</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-10 text-zinc-500">
-                    No se encontraron estudiantes.
+                    No se encontraron deportistas.
                   </td>
                 </tr>
               ) : (
@@ -178,7 +181,9 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                         {est.nombre} {est.apellidos}
                       </td>
                       <td className="px-6 py-4 font-mono">{est.cedula}</td>
-                      <td className="px-6 py-4 text-zinc-400">{est.curso}</td>
+                      <td className="px-6 py-4 text-emerald-400 font-medium">
+                        {est.disciplina || est.curso} {est.categoria ? `(${est.categoria})` : ''}
+                      </td>
                       <td className="px-6 py-4 text-center">
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
@@ -192,7 +197,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                           ) : (
                             <AlertCircle className="w-3.5 h-3.5" />
                           )}
-                          <span>{est.estado_pago}</span>
+                          <span>{isPagado ? 'Al Día' : 'En Mora'}</span>
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -206,7 +211,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                               : 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/20'
                           }`}
                         >
-                          {isPagado ? 'Marcar como Pendiente' : '✅ Marcar como Pagado'}
+                          {isPagado ? 'Marcar como Mora' : 'Registrar Pago / Al Día'}
                         </button>
                       </td>
                     </tr>
@@ -221,7 +226,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
         <div className="md:hidden divide-y divide-zinc-800/50">
           {filtered.length === 0 ? (
             <div className="text-center py-8 text-zinc-500 text-sm">
-              No se encontraron estudiantes.
+              No se encontraron deportistas.
             </div>
           ) : (
             filtered.map((est) => {
@@ -232,6 +237,9 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                     <div>
                       <div className="font-bold text-white">
                         {est.nombre} {est.apellidos}
+                      </div>
+                      <div className="text-xs text-emerald-400 font-medium">
+                        {est.disciplina || est.curso}
                       </div>
                       <div className="text-xs text-zinc-400 font-mono">
                         Cédula: {est.cedula}
@@ -244,7 +252,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                           : 'bg-red-500/10 text-red-400 border-red-500/30'
                       }`}
                     >
-                      {est.estado_pago}
+                      {isPagado ? 'Al Día' : 'En Mora'}
                     </span>
                   </div>
 
@@ -258,7 +266,7 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                         : 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/20'
                     }`}
                   >
-                    {isPagado ? 'Marcar como Pendiente' : '✅ Marcar como Pagado'}
+                    {isPagado ? 'Marcar como Mora' : 'Registrar Pago / Al Día'}
                   </button>
                 </div>
               );

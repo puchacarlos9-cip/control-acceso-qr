@@ -9,11 +9,13 @@ import {
   XCircle,
   Camera,
   X,
-  Search,
-  Upload,
-  UserCheck,
   History,
   AlertCircle,
+  Trophy,
+  Activity,
+  MapPin,
+  Phone,
+  UserCheck,
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
@@ -44,6 +46,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
   const [showQrModal, setShowQrModal] = useState(false);
   const [inputCedula, setInputCedula] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedZone, setSelectedZone] = useState('Ingreso Principal');
 
   // Result Modal State
   const [resultModal, setResultModal] = useState<{
@@ -51,7 +54,12 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
     permitido: boolean;
     nombre: string;
     cedula: string;
-    curso?: string;
+    disciplina?: string;
+    categoria?: string;
+    entrenador?: string;
+    apto_medico?: string;
+    estado_pago?: string;
+    contacto_emergencia?: string;
     motivo?: string;
   }>({
     isOpen: false,
@@ -112,10 +120,41 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
       } catch (err) {
         console.warn('Error iniciando cámara QR:', err);
         setCameraError(
-          'No se pudo acceder a la cámara. Revisa los permisos de tu navegador o usa el botón de Simulación de Prueba QR.'
+          'No se pudo acceder a la cámara. Revisa los permisos de tu navegador o usa la lista de Simulación de Prueba QR en pantalla.'
         );
       }
     }, 150);
+  };
+
+  const verifyStudentEntry = (est: Estudiante, metodo: 'QR' | 'Cédula') => {
+    const pagoOk = est.estado_pago === 'Pagado';
+    const medicoOk = est.apto_medico === 'Apto' || !est.apto_medico;
+
+    let motivo: string | undefined = undefined;
+    if (!pagoOk && !medicoOk) {
+      motivo = 'Membresía en mora y certificado médico vencido/pendiente.';
+    } else if (!pagoOk) {
+      motivo = 'Membresía mensual en mora. Requiere actualizar cuota.';
+    } else if (!medicoOk) {
+      motivo = `Certificado médico en estado: ${est.apto_medico}. Inhabilitado para entrenar.`;
+    }
+
+    const permitido = pagoOk && medicoOk;
+
+    onRegistrarAcceso(est, metodo, permitido, motivo);
+    setResultModal({
+      isOpen: true,
+      permitido,
+      nombre: `${est.nombre} ${est.apellidos}`,
+      cedula: est.cedula,
+      disciplina: est.disciplina || est.curso,
+      categoria: est.categoria,
+      entrenador: est.entrenador,
+      apto_medico: est.apto_medico || 'Apto',
+      estado_pago: est.estado_pago,
+      contacto_emergencia: est.contacto_emergencia,
+      motivo,
+    });
   };
 
   const handleVerifyCedula = (e?: React.FormEvent) => {
@@ -130,24 +169,11 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
       setIsSearching(false);
       const est = estudiantes.find((item) => item.cedula === clean);
       if (!est) {
-        onShowToast('Estudiante NO registrado en el sistema con esa cédula', 'error');
+        onShowToast('Socio/Atleta NO registrado en el Complejo Deportivo', 'error');
       } else {
         setShowCedulaModal(false);
         setInputCedula('');
-        const permitido = est.estado_pago === 'Pagado';
-        const motivo = permitido
-          ? undefined
-          : 'Este estudiante tiene pagos pendientes.';
-
-        onRegistrarAcceso(est, 'Cédula', permitido, motivo);
-        setResultModal({
-          isOpen: true,
-          permitido,
-          nombre: `${est.nombre} ${est.apellidos}`,
-          cedula: est.cedula,
-          curso: est.curso,
-          motivo,
-        });
+        verifyStudentEntry(est, 'Cédula');
       }
     }, 300);
   };
@@ -155,39 +181,30 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
   const handleVerifyQrUUID = (uuid: string) => {
     const est = estudiantes.find((item) => item.qr_uuid === uuid);
     if (!est) {
-      onShowToast('Código QR inválido o Estudiante no encontrado', 'error');
+      onShowToast('Código QR no válido o Socio no registrado en el Complejo', 'error');
     } else {
-      const permitido = est.estado_pago === 'Pagado';
-      const motivo = permitido
-        ? undefined
-        : 'Este estudiante tiene pagos pendientes.';
-
-      onRegistrarAcceso(est, 'QR', permitido, motivo);
-      setResultModal({
-        isOpen: true,
-        permitido,
-        nombre: `${est.nombre} ${est.apellidos}`,
-        cedula: est.cedula,
-        curso: est.curso,
-        motivo,
-      });
+      verifyStudentEntry(est, 'QR');
     }
   };
 
-  // Simulate instant QR scan for desktop/testing
+  // Simulate instant QR scan for testing
   const handleSimulateQr = (est: Estudiante) => {
     stopCamera();
     setShowQrModal(false);
     handleVerifyQrUUID(est.qr_uuid);
   };
 
+  const accesosPermitidosHoy = accesosRecientes.filter(
+    (l) => l.estado_ingreso === 'Permitido'
+  ).length;
+
   return (
     <div className="min-h-screen bg-[#09090b] text-white flex flex-col items-center p-4 sm:p-6 md:p-8 relative selection:bg-emerald-500 selection:text-black">
-      {/* Header bar responsive */}
-      <div className="w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-10 bg-[#18181b] border border-zinc-800/80 rounded-3xl p-4 sm:p-5 shadow-xl">
+      {/* Top Bar / Guard Session Banner */}
+      <div className="w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-8 bg-[#18181b] border border-zinc-800/80 rounded-3xl p-4 sm:p-5 shadow-xl">
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-zinc-800 border border-zinc-700/60 rounded-2xl flex items-center justify-center text-2xl shadow-inner flex-shrink-0 text-emerald-400">
-            👮
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl flex items-center justify-center text-2xl shadow-lg text-zinc-950 font-bold flex-shrink-0">
+            🏆
           </div>
           <div className="overflow-hidden">
             <div className="flex items-center gap-2">
@@ -195,36 +212,65 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                 {guardia.nombre}
               </h2>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold whitespace-nowrap">
-                {guardia.turno || 'Guardia Activo'}
+                {guardia.turno || 'Operador de Turno'}
               </span>
             </div>
-            <p className="text-zinc-400 text-xs sm:text-sm mt-0.5 truncate">
-              Punto de Control de Acceso Campus
+            <p className="text-zinc-400 text-xs sm:text-sm mt-0.5 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Torniquetes Complejo Deportivo</span>
             </p>
           </div>
         </div>
 
-        <button
-          onClick={onLogout}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-zinc-800/80 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 border border-zinc-700/50 hover:border-red-500/30 transition-all font-medium text-sm"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Cerrar Sesión</span>
-        </button>
+        {/* Live Zone Selector & Capacity metric */}
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-2xl flex items-center gap-2 text-xs">
+            <Activity className="w-4 h-4 text-emerald-400" />
+            <div>
+              <div className="text-zinc-400 text-[10px] uppercase font-bold">Aforo Deportivo</div>
+              <div className="font-mono text-emerald-400 font-bold">{accesosPermitidosHoy} Atletas</div>
+            </div>
+          </div>
+
+          <button
+            onClick={onLogout}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-zinc-800/80 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 border border-zinc-700/50 hover:border-red-500/30 transition-all font-medium text-xs sm:text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Cerrar Sesión</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Title */}
-      <div className="text-center mb-6 sm:mb-10 px-2 max-w-2xl">
-        <h1 className="text-3xl sm:text-5xl font-black mb-2 sm:mb-3 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-400">
-          Punto de Control
+      {/* Main Title & Zone Selector */}
+      <div className="text-center mb-6 sm:mb-8 px-2 max-w-2xl">
+        <h1 className="text-3xl sm:text-5xl font-black mb-2 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-blue-400">
+          Control de Acceso e Ingreso
         </h1>
-        <p className="text-zinc-400 text-sm sm:text-lg">
-          Verifique el estatus de ingreso del alumnado escaneando su QR o digitando su cédula
+        <p className="text-zinc-400 text-xs sm:text-base">
+          Verificación dual de mensualidades y aptitud médica para atletas y estudiantes socios
         </p>
+
+        {/* Zone Selector Pills */}
+        <div className="mt-4 inline-flex flex-wrap items-center justify-center bg-zinc-900/90 border border-zinc-800 rounded-2xl p-1 gap-1 text-xs">
+          {['Ingreso Principal', 'Piscina Olímpica', 'Canchas Sintéticas', 'Coliseo', 'Gimnasio'].map((zone) => (
+            <button
+              key={zone}
+              onClick={() => setSelectedZone(zone)}
+              className={`px-3 py-1.5 rounded-xl transition font-semibold ${
+                selectedZone === zone
+                  ? 'bg-emerald-500 text-zinc-950 font-bold shadow-md'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              {zone}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* 2 Big Adaptable Responsive Action Cards (1 col cellphone, 2 col computer) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-3xl mb-10">
+      {/* 2 Big Action Buttons (Responsive: 1 col mobile, 2 col PC) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-3xl mb-8">
         <button
           onClick={() => {
             setShowCedulaModal(true);
@@ -236,10 +282,10 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
             <CreditCard className="w-8 h-8 sm:w-10 sm:h-10" />
           </div>
           <span className="font-bold text-lg sm:text-xl tracking-wide text-white">
-            Por Cédula
+            Ingreso por Cédula
           </span>
           <span className="text-xs text-zinc-400 mt-1">
-            Búsqueda por número de identificación
+            Búsqueda manual para atletas o visitantes
           </span>
         </button>
 
@@ -251,31 +297,31 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
             <QrCode className="w-8 h-8 sm:w-10 sm:h-10" />
           </div>
           <span className="font-bold text-lg sm:text-xl tracking-wide text-white">
-            Por Código QR
+            Escanear Código QR
           </span>
           <span className="text-xs text-zinc-400 mt-1">
-            Escáner por cámara o simulación de prueba
+            Lectura rápida desde carnet o celular
           </span>
         </button>
       </div>
 
-      {/* Live Recent Scans Feed - Perfect for guard transparency */}
+      {/* Live Recent Access Feed */}
       <div className="w-full max-w-3xl bg-[#18181b] border border-zinc-800/80 rounded-3xl p-5 sm:p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800">
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-emerald-400" />
             <h3 className="font-bold text-base sm:text-lg text-white">
-              Últimos Accesos Registrados
+              Historial del Torniquete ({selectedZone})
             </h3>
           </div>
           <span className="text-xs text-zinc-500 font-mono">
-            En vivo • {accesosRecientes.length} hoy
+            En tiempo real
           </span>
         </div>
 
         {accesosRecientes.length === 0 ? (
           <div className="text-center py-8 text-zinc-500 text-sm">
-            No se han registrado ingresos en esta sesión.
+            No hay registros de ingreso en este punto de control.
           </div>
         ) : (
           <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
@@ -305,7 +351,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                         {log.nombre_estudiante}
                       </p>
                       <p className="text-xs text-zinc-400">
-                        Cédula: {log.cedula} • {log.metodo}
+                        Céd: {log.cedula} • {log.disciplina || 'Atleta'} • {log.metodo}
                       </p>
                     </div>
                   </div>
@@ -343,10 +389,10 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                 <CreditCard className="w-8 h-8" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-white">
-                Ingresar Cédula
+                Ingresar Cédula de Atleta
               </h3>
               <p className="text-zinc-400 text-xs mt-1">
-                Escribe el número de identificación del estudiante
+                Escribe la identificación para consultar derecho de ingreso
               </p>
             </div>
 
@@ -356,7 +402,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                 autoFocus
                 value={inputCedula}
                 onChange={(e) => setInputCedula(e.target.value)}
-                placeholder="0000000000"
+                placeholder="Ej: 1105432190"
                 className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-4 text-center text-xl tracking-widest text-white focus:outline-none focus:border-blue-500 mb-6 font-mono"
               />
               <div className="flex flex-col-reverse sm:flex-row gap-3">
@@ -380,7 +426,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
         </div>
       )}
 
-      {/* MODAL: ESCÁNER QR POR CÁMARA O PRUEBA RÁPIDA */}
+      {/* MODAL: ESCÁNER QR */}
       {showQrModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in">
           <div className="bg-[#18181b] border border-zinc-800 w-full max-w-md p-5 sm:p-7 rounded-3xl shadow-2xl relative flex flex-col items-center">
@@ -401,12 +447,12 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
             </div>
 
             {/* Camera viewport container */}
-            <div className="w-full bg-black rounded-2xl overflow-hidden border-2 border-zinc-700/60 mb-4 min-h-[260px] sm:min-h-[300px] flex items-center justify-center relative">
+            <div className="w-full bg-black rounded-2xl overflow-hidden border-2 border-zinc-700/60 mb-4 min-h-[260px] sm:min-h-[280px] flex items-center justify-center relative">
               <div id="lector-qr-box" className="w-full h-full"></div>
               {!isCameraActive && !cameraError && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400 gap-2 p-4 text-center">
                   <Camera className="w-8 h-8 animate-pulse text-emerald-400" />
-                  <span className="text-xs">Iniciando cámara...</span>
+                  <span className="text-xs">Iniciando cámara de torniquete...</span>
                 </div>
               )}
               {cameraError && (
@@ -417,27 +463,27 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
               )}
             </div>
 
-            {/* QUICK TEST QR SIMULATION BUTTONS (Great for computers or quick mobile demo) */}
+            {/* QUICK TEST QR SIMULATION LIST */}
             <div className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 mb-4">
               <p className="text-xs text-zinc-400 font-semibold mb-2.5 flex items-center gap-1.5">
                 <QrCode className="w-3.5 h-3.5 text-emerald-400" />
-                <span>¿Prueba en PC sin cámara o demo rápido?</span>
+                <span>Simulación directa para sustentación en PC:</span>
               </p>
-              <div className="grid grid-cols-2 gap-2">
-                {estudiantes.slice(0, 2).map((est) => (
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                {estudiantes.map((est) => (
                   <button
                     key={est.id}
                     type="button"
                     onClick={() => handleSimulateQr(est)}
-                    className={`p-2.5 rounded-xl text-left border transition text-xs ${
-                      est.estado_pago === 'Pagado'
+                    className={`p-2 rounded-xl text-left border transition text-xs ${
+                      est.estado_pago === 'Pagado' && (est.apto_medico === 'Apto' || !est.apto_medico)
                         ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40'
                         : 'bg-red-950/30 border-red-500/30 text-red-300 hover:bg-red-900/40'
                     }`}
                   >
-                    <div className="font-bold truncate">{est.nombre}</div>
-                    <div className="text-[10px] opacity-80">
-                      Céd: {est.cedula} • {est.estado_pago}
+                    <div className="font-bold truncate">{est.nombre} {est.apellidos.charAt(0)}.</div>
+                    <div className="text-[10px] opacity-80 truncate">
+                      {est.disciplina || est.curso} • {est.estado_pago}
                     </div>
                   </button>
                 ))}
@@ -457,43 +503,97 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
         </div>
       )}
 
-      {/* MODAL: RESULTADO DEL ACCESO (PERMITIDO / DENEGADO) */}
+      {/* MODAL: RESULTADO DEL ACCESO (VERIFICACIÓN DUAL DEPORTIVA) */}
       {resultModal.isOpen && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
-          <div className="bg-[#18181b] border border-zinc-800 w-full max-w-sm p-6 sm:p-8 rounded-3xl shadow-2xl text-center relative">
+          <div className="bg-[#18181b] border border-zinc-800 w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl text-center relative">
             <div className="mb-4 flex justify-center">
               {resultModal.permitido ? (
-                <CheckCircle2 className="w-24 h-24 text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-bounce" />
+                <CheckCircle2 className="w-20 h-20 sm:w-24 sm:h-24 text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-bounce" />
               ) : (
-                <XCircle className="w-24 h-24 text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce" />
+                <XCircle className="w-20 h-20 sm:w-24 sm:h-24 text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce" />
               )}
             </div>
 
             <h3
-              className={`text-2xl sm:text-3xl font-black mb-2 mt-2 tracking-wider ${
+              className={`text-2xl sm:text-3xl font-black mb-1 tracking-wider ${
                 resultModal.permitido ? 'text-emerald-400' : 'text-red-500'
               }`}
             >
-              {resultModal.permitido ? 'ACCESO PERMITIDO' : 'ACCESO DENEGADO'}
+              {resultModal.permitido ? 'ACCESO AUTORIZADO' : 'INGRESO BLOQUEADO'}
             </h3>
+            <p className="text-xs text-zinc-400 mb-4">{selectedZone}</p>
 
-            <div className="mt-4 mb-6 p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800">
-              <span className="font-bold text-white text-lg sm:text-xl uppercase block truncate">
-                {resultModal.nombre}
-              </span>
-              <span className="text-zinc-400 text-xs block mt-1">
-                Cédula: {resultModal.cedula}
-                {resultModal.curso ? ` • ${resultModal.curso}` : ''}
-              </span>
+            <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-3 text-left">
+              <div>
+                <span className="font-bold text-white text-lg block uppercase truncate">
+                  {resultModal.nombre}
+                </span>
+                <span className="text-zinc-400 text-xs font-mono">
+                  Cédula: {resultModal.cedula}
+                </span>
+              </div>
 
-              <div className="mt-3 pt-3 border-t border-zinc-800">
+              {/* Sports details */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800/80 text-xs">
+                <div>
+                  <span className="text-zinc-500 block text-[10px]">Disciplina & Categoría</span>
+                  <span className="font-semibold text-emerald-300">
+                    {resultModal.disciplina} {resultModal.categoria ? `(${resultModal.categoria})` : ''}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block text-[10px]">Entrenador Responsable</span>
+                  <span className="font-semibold text-zinc-200">
+                    {resultModal.entrenador || 'Asignado'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Status Badges Dual */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800/80 text-xs">
+                <div className="p-2 rounded-xl bg-zinc-800/60 flex items-center justify-between">
+                  <span className="text-zinc-400 text-[11px]">Cuota Mensual</span>
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded-md text-[10px] ${
+                      resultModal.estado_pago === 'Pagado'
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-red-500/20 text-red-400'
+                    }`}
+                  >
+                    {resultModal.estado_pago}
+                  </span>
+                </div>
+
+                <div className="p-2 rounded-xl bg-zinc-800/60 flex items-center justify-between">
+                  <span className="text-zinc-400 text-[11px]">Ficha Médica</span>
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded-md text-[10px] ${
+                      resultModal.apto_medico === 'Apto'
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-amber-500/20 text-amber-400'
+                    }`}
+                  >
+                    {resultModal.apto_medico}
+                  </span>
+                </div>
+              </div>
+
+              {resultModal.contacto_emergencia && (
+                <div className="text-[11px] text-zinc-400 flex items-center gap-1.5 pt-1">
+                  <Phone className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Emergencia: {resultModal.contacto_emergencia}</span>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-zinc-800">
                 {resultModal.permitido ? (
-                  <span className="text-emerald-400 font-semibold text-sm">
-                    ✨ Puede ingresar a las instalaciones.
+                  <span className="text-emerald-400 font-semibold text-xs flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> Torniquete desbloqueado. Bienvenido a su entrenamiento.
                   </span>
                 ) : (
-                  <span className="text-red-400 font-semibold text-sm">
-                    ⚠️ {resultModal.motivo || 'Ingreso bloqueado.'}
+                  <span className="text-red-400 font-semibold text-xs flex items-center gap-1">
+                    ⚠️ {resultModal.motivo || 'No autorizado para el ingreso.'}
                   </span>
                 )}
               </div>
@@ -501,7 +601,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
 
             <button
               onClick={() => setResultModal({ ...resultModal, isOpen: false })}
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-2xl font-bold text-base transition shadow-lg"
+              className="mt-5 w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-2xl font-bold text-base transition shadow-lg"
             >
               Cerrar y Continuar
             </button>

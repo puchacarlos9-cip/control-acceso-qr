@@ -28,7 +28,7 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-// Initial Demo/Fallback Students
+// Initial Demo/Fallback Students (Complejo Deportivo - Atletas Estudiantes)
 const DEFAULT_ESTUDIANTES: Estudiante[] = [
   {
     id: 'est-1',
@@ -38,7 +38,12 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     estado_pago: 'Pagado',
     qr_uuid: 'a1b2c3d4-e5f6-4a11-b222-110543219000',
     fecha_registro: '2026-08-01 10:00:00',
-    curso: 'Ingeniería en Sistemas - 6to Semestre'
+    curso: 'Natación - Sub-18',
+    disciplina: 'Natación',
+    categoria: 'Sub-18',
+    entrenador: 'Prof. Roberto Silva',
+    apto_medico: 'Apto',
+    contacto_emergencia: '0991234567 (Madre)'
   },
   {
     id: 'est-2',
@@ -48,7 +53,12 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     estado_pago: 'Pagado',
     qr_uuid: 'b2c3d4e5-f6a1-4b22-c333-172345678900',
     fecha_registro: '2026-08-01 10:15:00',
-    curso: 'Arquitectura - 4to Semestre'
+    curso: 'Gimnasia Artística - Sub-14',
+    disciplina: 'Gimnasia Artística',
+    categoria: 'Sub-14',
+    entrenador: 'Dra. Elena Paz',
+    apto_medico: 'Apto',
+    contacto_emergencia: '0987654321 (Padre)'
   },
   {
     id: 'est-3',
@@ -58,7 +68,12 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     estado_pago: 'Pendiente',
     qr_uuid: 'c3d4e5f6-a1b2-4c33-d444-091234567800',
     fecha_registro: '2026-08-02 14:20:00',
-    curso: 'Derecho - 2do Semestre'
+    curso: 'Fútbol Formativo - Sub-16',
+    disciplina: 'Fútbol',
+    categoria: 'Sub-16',
+    entrenador: 'Prof. Marco Torres',
+    apto_medico: 'Pendiente',
+    contacto_emergencia: '0995554433 (Tutor)'
   },
   {
     id: 'est-4',
@@ -68,7 +83,27 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     estado_pago: 'Pagado',
     qr_uuid: 'd4e5f6a1-b2c3-4d44-e555-110456789000',
     fecha_registro: '2026-08-03 08:30:00',
-    curso: 'Medicina - 8vo Semestre'
+    curso: 'Atletismo - Selección',
+    disciplina: 'Atletismo',
+    categoria: 'Selección',
+    entrenador: 'Prof. Luis Vega',
+    apto_medico: 'Apto',
+    contacto_emergencia: '0998887766 (Madre)'
+  },
+  {
+    id: 'est-5',
+    nombre: 'Mateo',
+    apellidos: 'Alvear',
+    cedula: '1755443322',
+    estado_pago: 'Pendiente',
+    qr_uuid: 'e5f6a1b2-c3d4-4e55-f666-175544332200',
+    fecha_registro: '2026-08-03 09:10:00',
+    curso: 'Baloncesto - Sub-15',
+    disciplina: 'Baloncesto',
+    categoria: 'Sub-15',
+    entrenador: 'Prof. Diego Morales',
+    apto_medico: 'Vencido',
+    contacto_emergencia: '0994443322 (Padre)'
   }
 ];
 
@@ -76,7 +111,7 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
 const DEFAULT_USUARIOS: Usuario[] = [
   {
     id: 'usr-1',
-    nombre: 'Admin General',
+    nombre: 'Director General (Tesis)',
     usuario: 'superadmin',
     password: '123',
     rol: 'super_admin',
@@ -84,7 +119,7 @@ const DEFAULT_USUARIOS: Usuario[] = [
   },
   {
     id: 'usr-2',
-    nombre: 'Coordinador Académico',
+    nombre: 'Coordinador Deportivo',
     usuario: 'admin',
     password: '123',
     rol: 'admin',
@@ -92,7 +127,7 @@ const DEFAULT_USUARIOS: Usuario[] = [
   },
   {
     id: 'usr-3',
-    nombre: 'Marco Gómez',
+    nombre: 'Operador Torniquete 1',
     usuario: 'guardia',
     password: '123',
     rol: 'guardia',
@@ -101,7 +136,7 @@ const DEFAULT_USUARIOS: Usuario[] = [
   },
   {
     id: 'usr-4',
-    nombre: 'Julio Peralta',
+    nombre: 'Operador Piscina & Coliseo',
     usuario: 'guardia2',
     password: '123',
     rol: 'guardia',
@@ -116,29 +151,35 @@ const DEFAULT_LOGS: AccesoLog[] = [
     id: 'log-1',
     nombre_estudiante: 'Carlos Pucha',
     cedula: '1105432190',
-    guardia_responsable: 'Marco Gómez',
+    guardia_responsable: 'Operador Torniquete 1',
     fecha_hora: new Date(Date.now() - 3600 * 1000 * 2).toLocaleString('es-EC'),
     estado_ingreso: 'Permitido',
-    metodo: 'QR'
+    metodo: 'QR',
+    disciplina: 'Natación',
+    zona_acceso: 'Piscina Olímpica'
   },
   {
     id: 'log-2',
     nombre_estudiante: 'Valeria Mendoza',
     cedula: '1723456789',
-    guardia_responsable: 'Marco Gómez',
+    guardia_responsable: 'Operador Torniquete 1',
     fecha_hora: new Date(Date.now() - 3600 * 1000 * 1.5).toLocaleString('es-EC'),
     estado_ingreso: 'Permitido',
-    metodo: 'Cédula'
+    metodo: 'Cédula',
+    disciplina: 'Gimnasia Artística',
+    zona_acceso: 'Ingreso Principal'
   },
   {
     id: 'log-3',
     nombre_estudiante: 'Fernando Rodríguez',
     cedula: '0912345678',
-    guardia_responsable: 'Marco Gómez',
+    guardia_responsable: 'Operador Torniquete 1',
     fecha_hora: new Date(Date.now() - 3600 * 1000 * 0.5).toLocaleString('es-EC'),
     estado_ingreso: 'Denegado',
     metodo: 'QR',
-    motivo: 'Este estudiante tiene pagos pendientes.'
+    motivo: 'Pensión de disciplina en mora / Ficha médica pendiente.',
+    disciplina: 'Fútbol',
+    zona_acceso: 'Canchas Sintéticas'
   }
 ];
 
@@ -239,7 +280,12 @@ export async function fetchEstudiantes(): Promise<Estudiante[]> {
         estado_pago: data.estado_pago || 'Pendiente',
         qr_uuid: data.qr_uuid || '',
         fecha_registro: data.fecha_registro ? (typeof data.fecha_registro.toDate === 'function' ? data.fecha_registro.toDate().toLocaleString('es-EC') : String(data.fecha_registro)) : 'Reciente',
-        curso: data.curso || 'Carrera General'
+        curso: data.curso || data.disciplina || 'Formación Deportiva',
+        disciplina: data.disciplina || 'General',
+        categoria: data.categoria || 'Sub-16',
+        entrenador: data.entrenador || 'Por Asignar',
+        apto_medico: data.apto_medico || 'Apto',
+        contacto_emergencia: data.contacto_emergencia || 'Sin registrar'
       });
     });
     if (lista.length > 0) {
@@ -373,7 +419,9 @@ export async function fetchLogsAcceso(): Promise<AccesoLog[]> {
         fecha_hora: data.fecha_hora && typeof data.fecha_hora.toDate === 'function' ? data.fecha_hora.toDate().toLocaleString('es-EC') : String(data.fecha_hora || new Date().toLocaleString('es-EC')),
         estado_ingreso: data.estado_ingreso || 'Permitido',
         metodo: data.metodo || 'QR',
-        motivo: data.motivo
+        motivo: data.motivo,
+        disciplina: data.disciplina || 'General',
+        zona_acceso: data.zona_acceso || 'Ingreso Principal'
       });
     });
     if (lista.length > 0) {
@@ -403,7 +451,9 @@ export async function registrarAccesoLog(nuevo: Omit<AccesoLog, 'id'>): Promise<
       fecha_hora: serverTimestamp(),
       estado_ingreso: nuevo.estado_ingreso,
       metodo: nuevo.metodo,
-      motivo: nuevo.motivo || null
+      motivo: nuevo.motivo || null,
+      disciplina: nuevo.disciplina || null,
+      zona_acceso: nuevo.zona_acceso || null
     });
   } catch (e) {
     // ignore offline

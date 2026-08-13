@@ -13,7 +13,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { Estudiante, Usuario, AccesoLog, RolUsuario } from '../types';
+import { Estudiante, Usuario, AccesoLog, Pago, RolUsuario } from '../types';
 
 // Exact Firebase Config from user's original documents
 const firebaseConfig = {
@@ -183,6 +183,58 @@ const DEFAULT_LOGS: AccesoLog[] = [
   }
 ];
 
+// Initial Demo Payments
+const DEFAULT_PAGOS: Pago[] = [
+  {
+    id: 'pago-1',
+    estudiante_id: 'est-1',
+    estudiante_nombre: 'Carlos Pucha',
+    cedula: '1105432190',
+    mes_pagado: 'Agosto 2026',
+    monto: 25.00,
+    metodo_pago: 'Efectivo',
+    fecha_pago: '2026-08-01',
+    fecha_vencimiento: '2026-09-01',
+    registrado_por: 'Admin Panel',
+    comprobante: 'REC-00124'
+  },
+  {
+    id: 'pago-2',
+    estudiante_id: 'est-2',
+    estudiante_nombre: 'Valeria Mendoza',
+    cedula: '1723456789',
+    mes_pagado: 'Agosto 2026',
+    monto: 30.00,
+    metodo_pago: 'Transferencia',
+    fecha_pago: '2026-08-01',
+    fecha_vencimiento: '2026-09-01',
+    registrado_por: 'Admin Panel',
+    comprobante: 'TRF-98214'
+  }
+];
+
+// Helper to check/load LocalStorage
+const getLocalPagos = (): Pago[] => {
+  try {
+    const data = localStorage.getItem('qr_pagos_cache');
+    if (!data) {
+      localStorage.setItem('qr_pagos_cache', JSON.stringify(DEFAULT_PAGOS));
+      return DEFAULT_PAGOS;
+    }
+    return JSON.parse(data);
+  } catch {
+    return DEFAULT_PAGOS;
+  }
+};
+
+const saveLocalPagos = (list: Pago[]) => {
+  try {
+    localStorage.setItem('qr_pagos_cache', JSON.stringify(list));
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 // Helper to check/load LocalStorage
 const getLocalEstudiantes = (): Estudiante[] => {
   try {
@@ -265,6 +317,39 @@ export async function checkFirebaseConnection(): Promise<boolean> {
   }
 }
 
+// VERIFICACIÓN Y VENCIMIENTO AUTOMÁTICO DE PENSIONES
+export async function verificarVencimientosAutomaticos(estudiantes: Estudiante[]): Promise<Estudiante[]> {
+  const hoyStr = new Date().toISOString().split('T')[0]; // e.g. "2026-08-12"
+  let huboCambios = false;
+
+  const procesados = await Promise.all(
+    estudiantes.map(async (est) => {
+      // Si el estudiante figura como "Pagado" pero ya pasó su fecha de vencimiento, cambiar automáticamente a "Pendiente" (En Mora)
+      if (
+        est.estado_pago === 'Pagado' &&
+        est.fecha_vencimiento_pago &&
+        est.fecha_vencimiento_pago < hoyStr
+      ) {
+        huboCambios = true;
+        const actualizado = { ...est, estado_pago: 'Pendiente' as const };
+        try {
+          const ref = doc(db, 'estudiantes', est.id);
+          await updateDoc(ref, { estado_pago: 'Pendiente' });
+        } catch (e) {
+          // offline support
+        }
+        return actualizado;
+      }
+      return est;
+    })
+  );
+
+  if (huboCambios) {
+    saveLocalEstudiantes(procesados);
+  }
+  return procesados;
+}
+
 // ESTUDIANTES CRUD
 export async function fetchEstudiantes(): Promise<Estudiante[]> {
   try {
@@ -285,18 +370,23 @@ export async function fetchEstudiantes(): Promise<Estudiante[]> {
         categoria: data.categoria || 'Sub-16',
         entrenador: data.entrenador || 'Por Asignar',
         apto_medico: data.apto_medico || 'Apto',
-        contacto_emergencia: data.contacto_emergencia || 'Sin registrar'
+        contacto_emergencia: data.contacto_emergencia || 'Sin registrar',
+        fecha_ultimo_pago: data.fecha_ultimo_pago,
+        fecha_vencimiento_pago: data.fecha_vencimiento_pago,
+        monto_ultimo_pago: data.monto_ultimo_pago
       });
     });
     if (lista.length > 0) {
       isFirebaseOnline = true;
-      saveLocalEstudiantes(lista);
-      return lista;
+      const verificados = await verificarVencimientosAutomaticos(lista);
+      saveLocalEstudiantes(verificados);
+      return verificados;
     }
   } catch (error) {
     isFirebaseOnline = false;
   }
-  return getLocalEstudiantes();
+  const locales = getLocalEstudiantes();
+  return verificarVencimientosAutomaticos(locales);
 }
 
 export async function agregarEstudiante(nuevo: Omit<Estudiante, 'id'>): Promise<Estudiante> {
@@ -471,3 +561,86 @@ export function generateUUID(): string {
     return v.toString(16);
   });
 }
+
+// PAGOS DE MENSUALIDADES / PENSIONES CRUD
+export async function fetchPagos(): Promise<Pago[]> {
+  try {
+    const snapshot = await getDocs(collection(db, 'pagos'));
+    const lista: Pago[] = [];
+    snapshot.forEach((d) => {
+      const data = d.data();
+      lista.push({
+        id: d.id,
+        estudiante_id: data.estudiante_id || '',
+        estudiante_nombre: data.estudiante_nombre || 'Estudiante',
+        cedula: data.cedula || '',
+        mes_pagado: data.mes_pagado || 'Mes Actual',
+        monto: Number(data.monto) || 0,
+        metodo_pago: data.metodo_pago || 'Efectivo',
+        fecha_pago: data.fecha_pago || new Date().toISOString().split('T')[0],
+        fecha_vencimiento: data.fecha_vencimiento || new Date().toISOString().split('T')[0],
+        registrado_por: data.registrado_por || 'Sistema',
+        comprobante: data.comprobante || ''
+      });
+    });
+    if (lista.length > 0) {
+      isFirebaseOnline = true;
+      lista.sort((a, b) => b.fecha_pago.localeCompare(a.fecha_pago));
+      saveLocalPagos(lista);
+      return lista;
+    }
+  } catch (error) {
+    isFirebaseOnline = false;
+  }
+  return getLocalPagos();
+}
+
+export async function registrarPago(nuevo: Omit<Pago, 'id'>): Promise<{ pago: Pago; estudianteActualizado?: Estudiante }> {
+  let docId = 'pago-' + Date.now();
+  try {
+    const docRef = await addDoc(collection(db, 'pagos'), {
+      ...nuevo,
+      fecha_creacion: serverTimestamp()
+    });
+    docId = docRef.id;
+  } catch (e) {
+    console.warn('Error registrando pago en Firebase:', e);
+  }
+
+  const pagoItem: Pago = { ...nuevo, id: docId };
+
+  // Guardar en caché local de pagos
+  const localPagos = getLocalPagos();
+  saveLocalPagos([pagoItem, ...localPagos]);
+
+  // Actualizar estado_pago, fecha_ultimo_pago y fecha_vencimiento_pago en la colección "estudiantes"
+  let estudianteActualizado: Estudiante | undefined;
+  try {
+    const ref = doc(db, 'estudiantes', nuevo.estudiante_id);
+    await updateDoc(ref, {
+      estado_pago: 'Pagado',
+      fecha_ultimo_pago: nuevo.fecha_pago,
+      fecha_vencimiento_pago: nuevo.fecha_vencimiento,
+      monto_ultimo_pago: nuevo.monto
+    });
+  } catch (e) {
+    console.warn('Error actualizando estudiante tras pago en Firestore:', e);
+  }
+
+  const estudiantes = getLocalEstudiantes();
+  const idx = estudiantes.findIndex((e) => e.id === nuevo.estudiante_id || e.cedula === nuevo.cedula);
+  if (idx !== -1) {
+    estudiantes[idx] = {
+      ...estudiantes[idx],
+      estado_pago: 'Pagado',
+      fecha_ultimo_pago: nuevo.fecha_pago,
+      fecha_vencimiento_pago: nuevo.fecha_vencimiento,
+      monto_ultimo_pago: nuevo.monto
+    };
+    saveLocalEstudiantes(estudiantes);
+    estudianteActualizado = estudiantes[idx];
+  }
+
+  return { pago: pagoItem, estudianteActualizado };
+}
+

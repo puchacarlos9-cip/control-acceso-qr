@@ -44,23 +44,23 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navItems: NavItem[] = [
     {
       id: 'estudiantes',
-      label: 'Atletas & Socios',
+      label: 'Estudiantes',
       icon: Users,
-      badge: 'QR & Credenciales',
+      badge: 'Base de Datos',
       color: 'emerald',
     },
     {
       id: 'pagos',
-      label: 'Membresías & Cuotas',
+      label: 'Pagos',
       icon: CreditCard,
-      badge: 'Aptitud & Pagos',
+      badge: 'Estado de Pensiones',
       color: 'teal',
     },
     {
       id: 'reportes',
-      label: 'Aforo & Auditoría',
+      label: 'Reportes',
       icon: PieChart,
-      badge: 'Accesos en Vivo',
+      badge: 'Dashboard',
       color: 'blue',
     },
   ];
@@ -68,7 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   if (user.rol === 'super_admin') {
     navItems.push({
       id: 'usuarios',
-      label: 'Personal & Roles',
+      label: 'Súper Admin',
       icon: ShieldAlert,
       badge: 'Súper Admin',
       color: 'purple',
@@ -76,10 +76,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   }
 
   const titlesMap: Record<string, string> = {
-    estudiantes: 'Gestión de Atletas & Socios',
-    pagos: 'Membresías & Cuotas Deportivas',
-    reportes: 'Dashboard de Aforo y Auditoría',
-    usuarios: 'Gestión de Personal del Complejo',
+    estudiantes: 'Base de Estudiantes',
+    pagos: 'Estado de Pensiones',
+    reportes: 'Dashboard de Reportes',
+    usuarios: 'Gestión de Personal',
   };
 
   return (
@@ -94,10 +94,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div>
               <h2 className="font-black text-lg tracking-wide text-white">
-                COMPLEJO DEPORTIVO
+                ADMIN PANEL
               </h2>
               <span className="text-[11px] text-emerald-400 font-semibold block">
-                Control de Acceso QR (Tesis)
+                Control de Acceso
               </span>
             </div>
           </div>

@@ -29,6 +29,23 @@ export interface Estudiante {
   entrenador?: string;
   apto_medico?: EstadoAptoMedico;
   contacto_emergencia?: string;
+  fecha_ultimo_pago?: string;
+  fecha_vencimiento_pago?: string;
+  monto_ultimo_pago?: number;
+}
+
+export interface Pago {
+  id: string;
+  estudiante_id: string;
+  estudiante_nombre: string;
+  cedula: string;
+  mes_pagado: string;
+  monto: number;
+  metodo_pago: 'Efectivo' | 'Transferencia' | 'Tarjeta' | 'Otro';
+  fecha_pago: string; // YYYY-MM-DD
+  fecha_vencimiento: string; // YYYY-MM-DD
+  registrado_por: string;
+  comprobante?: string;
 }
 
 export interface AccesoLog {

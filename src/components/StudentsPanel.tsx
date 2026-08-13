@@ -181,15 +181,15 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-emerald-400" />
-              <span>Atletas y Socios del Complejo</span>
+              <UserPlus className="w-5 h-5 text-emerald-400" />
+              <span>Estudiantes</span>
             </h2>
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-mono font-bold">
               {filtered.length} registrados
             </span>
           </div>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Gestión de deportistas, asignación de disciplinas, verificación médica y credenciales QR.
+            Visualiza y administra los registros de la base de datos de estudiantes.
           </p>
         </div>
 
@@ -198,7 +198,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
           className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-5 py-3 rounded-2xl flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20 whitespace-nowrap text-sm"
         >
           <UserPlus className="w-4 h-4" />
-          <span>Registrar Atleta / Socio</span>
+          <span>Registrar Estudiante</span>
         </button>
       </div>
 
@@ -279,7 +279,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
             <thead className="text-xs uppercase bg-zinc-900/80 text-zinc-500 border-b border-zinc-800">
               <tr>
                 <th className="px-6 py-4 font-semibold">Cédula</th>
-                <th className="px-6 py-4 font-semibold">Deportista</th>
+                <th className="px-6 py-4 font-semibold">Estudiante</th>
                 <th className="px-6 py-4 font-semibold">Disciplina & Categoría</th>
                 <th className="px-6 py-4 font-semibold">Ficha Médica</th>
                 <th className="px-6 py-4 font-semibold text-center">Cuota / Membresía</th>
@@ -291,7 +291,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-zinc-500">
-                    No se encontraron deportistas con los criterios seleccionados.
+                    No se encontraron estudiantes con los criterios seleccionados.
                   </td>
                 </tr>
               ) : (

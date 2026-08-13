@@ -3,6 +3,7 @@ import {
   Usuario,
   Estudiante,
   AccesoLog,
+  Pago,
   ToastMessage,
   RolUsuario,
 } from './types';
@@ -16,6 +17,8 @@ import {
   borrarUsuario,
   fetchLogsAcceso,
   registrarAccesoLog,
+  fetchPagos,
+  registrarPago,
   checkFirebaseConnection,
   isFirebaseOnline as isFbOnlineVal,
 } from './firebase/config';
@@ -49,6 +52,7 @@ export default function App() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [logsAcceso, setLogsAcceso] = useState<AccesoLog[]>([]);
+  const [pagos, setPagos] = useState<Pago[]>([]);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [isFirebaseOnline, setIsFirebaseOnline] = useState<boolean>(true);
 
@@ -92,15 +96,17 @@ export default function App() {
       await checkFirebaseConnection();
       setIsFirebaseOnline(isFbOnlineVal);
 
-      const [listaEst, listaUsr, listaLogs] = await Promise.all([
+      const [listaEst, listaUsr, listaLogs, listaPagos] = await Promise.all([
         fetchEstudiantes(),
         fetchUsuarios(),
         fetchLogsAcceso(),
+        fetchPagos(),
       ]);
 
       setEstudiantes(listaEst);
       setUsuarios(listaUsr);
       setLogsAcceso(listaLogs);
+      setPagos(listaPagos);
     } catch (err) {
       console.warn('Error cargando datos:', err);
       showToast('Cargando en modo caché local responsive', 'info');
@@ -112,6 +118,17 @@ export default function App() {
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
+
+  // PAGOS HANDLER
+  const handleRegistrarPago = async (nuevoPago: Omit<Pago, 'id'>) => {
+    const { pago, estudianteActualizado } = await registrarPago(nuevoPago);
+    setPagos((prev) => [pago, ...prev]);
+    if (estudianteActualizado) {
+      setEstudiantes((prev) =>
+        prev.map((e) => (e.id === estudianteActualizado.id ? estudianteActualizado : e))
+      );
+    }
+  };
 
   // Handle Login & Session
   const handleLoginSuccess = (usr: Usuario) => {
@@ -326,7 +343,11 @@ export default function App() {
           {activeTab === 'pagos' && (
             <PaymentsPanel
               estudiantes={estudiantes}
+              pagos={pagos}
+              userNombre={user?.nombre}
+              onRegistrarPago={handleRegistrarPago}
               onToggleEstadoPago={handleToggleEstadoPago}
+              onShowToast={showToast}
             />
           )}
 

@@ -9,12 +9,6 @@ import {
   X,
   CheckCircle2,
   AlertCircle,
-  Trophy,
-  Activity,
-  Phone,
-  ShieldCheck,
-  UserCheck,
-  Printer,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -26,20 +20,6 @@ interface StudentsPanelProps {
   onShowToast: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const DISCIPLINAS = [
-  'Natación',
-  'Fútbol',
-  'Baloncesto',
-  'Atletismo',
-  'Tenis de Campo',
-  'Gimnasia Olímpica',
-  'Voleibol',
-  'Taekwondo',
-  'Acondicionamiento Físico',
-];
-
-const CATEGORIAS = ['Infantil (Sub-12)', 'Juvenil (Sub-18)', 'Selección Mayor', 'Máster', 'Libre / Socio General'];
-
 export const StudentsPanel: React.FC<StudentsPanelProps> = ({
   estudiantes,
   onAddEstudiante,
@@ -49,18 +29,12 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState<'todos' | 'Pagado' | 'Pendiente'>('todos');
-  const [filterDisciplina, setFilterDisciplina] = useState<string>('todas');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Form state
   const [nombre, setNombre] = useState('');
   const [apellidos, setApellidos] = useState('');
   const [cedula, setCedula] = useState('');
-  const [disciplina, setDisciplina] = useState('Natación');
-  const [categoria, setCategoria] = useState('Selección Mayor');
-  const [entrenador, setEntrenador] = useState('');
-  const [aptoMedico, setAptoMedico] = useState<'Apto' | 'Pendiente' | 'Vencido'>('Apto');
-  const [contactoEmergencia, setContactoEmergencia] = useState('');
   const [estadoPago, setEstadoPago] = useState<'Pagado' | 'Pendiente'>('Pagado');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,7 +49,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
     const cleanCedula = cedula.trim();
 
     if (!cleanNombre || !cleanApellidos || !cleanCedula) {
-      return onShowToast('Por favor completa el nombre, apellidos y cédula del atleta', 'error');
+      return onShowToast('Por favor completa el nombre, apellidos y cédula del estudiante', 'error');
     }
 
     if (cleanCedula.length < 6) {
@@ -84,7 +58,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
 
     // Check duplicate cedula
     if (estudiantes.some((e) => e.cedula === cleanCedula)) {
-      return onShowToast('Ya existe un socio/atleta registrado con esa cédula', 'error');
+      return onShowToast('Ya existe un estudiante registrado con esa cédula', 'error');
     }
 
     setIsSubmitting(true);
@@ -101,12 +75,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
         nombre: cleanNombre,
         apellidos: cleanApellidos,
         cedula: cleanCedula,
-        curso: disciplina,
-        disciplina: disciplina,
-        categoria: categoria,
-        entrenador: entrenador.trim() || 'Por Asignar',
-        apto_medico: aptoMedico,
-        contacto_emergencia: contactoEmergencia.trim() || 'No Registrado',
         estado_pago: estadoPago,
         qr_uuid: secretUUID,
       });
@@ -114,11 +82,9 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
       setNombre('');
       setApellidos('');
       setCedula('');
-      setEntrenador('');
-      setContactoEmergencia('');
-      onShowToast('Atleta registrado y credencial QR generada con éxito', 'success');
+      onShowToast('Estudiante registrado y credencial QR generada con éxito', 'success');
     } catch (err) {
-      onShowToast('Error al registrar atleta', 'error');
+      onShowToast('Error al registrar estudiante', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -163,15 +129,10 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
   const filtered = estudiantes.filter((est) => {
     const term = searchTerm.toLowerCase().trim();
     const full = `${est.nombre} ${est.apellidos}`.toLowerCase();
-    const disc = (est.disciplina || est.curso || '').toLowerCase();
-    const matchSearch =
-      full.includes(term) || est.cedula.includes(term) || disc.includes(term);
-
+    const matchSearch = full.includes(term) || est.cedula.includes(term);
     const matchEstado = filterEstado === 'todos' || est.estado_pago === filterEstado;
-    const matchDisciplina =
-      filterDisciplina === 'todas' || est.disciplina === filterDisciplina || est.curso === filterDisciplina;
 
-    return matchSearch && matchEstado && matchDisciplina;
+    return matchSearch && matchEstado;
   });
 
   return (
@@ -210,7 +171,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nombre, cédula o disciplina deportiva..."
+            placeholder="Buscar por nombre o cédula..."
             className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition placeholder:text-zinc-600"
           />
           {searchTerm && (
@@ -222,20 +183,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
             </button>
           )}
         </div>
-
-        {/* Disciplina Filter */}
-        <select
-          value={filterDisciplina}
-          onChange={(e) => setFilterDisciplina(e.target.value)}
-          className="bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-xs text-zinc-300 focus:outline-none focus:border-emerald-500"
-        >
-          <option value="todas">Todas las Disciplinas</option>
-          {DISCIPLINAS.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
 
         {/* Estado Filter */}
         <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl p-1 text-xs">
@@ -273,15 +220,13 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
       </div>
 
       {/* VIEW 1: DESKTOP TABLE */}
-      <div className="hidden md:block bg-[#121212] border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xl">
+      <div className="bg-[#121212] border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xl">
         <div className="w-full overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-300">
             <thead className="text-xs uppercase bg-zinc-900/80 text-zinc-500 border-b border-zinc-800">
               <tr>
                 <th className="px-6 py-4 font-semibold">Cédula</th>
                 <th className="px-6 py-4 font-semibold">Estudiante</th>
-                <th className="px-6 py-4 font-semibold">Disciplina & Categoría</th>
-                <th className="px-6 py-4 font-semibold">Ficha Médica</th>
                 <th className="px-6 py-4 font-semibold text-center">Cuota / Membresía</th>
                 <th className="px-6 py-4 font-semibold text-center">Credencial QR</th>
                 <th className="px-6 py-4 font-semibold text-center">Acciones</th>
@@ -290,14 +235,13 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
             <tbody className="divide-y divide-zinc-800/50">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-zinc-500">
+                  <td colSpan={5} className="text-center py-10 text-zinc-500">
                     No se encontraron estudiantes con los criterios seleccionados.
                   </td>
                 </tr>
               ) : (
                 filtered.map((est) => {
                   const isPagado = est.estado_pago === 'Pagado';
-                  const apto = est.apto_medico || 'Apto';
                   return (
                     <tr
                       key={est.id}
@@ -308,30 +252,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
                         <div className="font-bold text-white">
                           {est.nombre} {est.apellidos}
                         </div>
-                        <div className="text-[11px] text-zinc-500 flex items-center gap-1 mt-0.5">
-                          <UserCheck className="w-3 h-3 text-emerald-400" />
-                          <span>Entrenador: {est.entrenador || 'Asignado'}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-emerald-400 block">
-                          {est.disciplina || est.curso}
-                        </span>
-                        <span className="text-xs text-zinc-400">
-                          {est.categoria || 'Socio General'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                            apto === 'Apto'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          }`}
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>{apto}</span>
-                        </span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button
@@ -387,12 +307,11 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
       <div className="md:hidden grid grid-cols-1 gap-3">
         {filtered.length === 0 ? (
           <div className="text-center py-10 bg-zinc-900/50 rounded-2xl border border-zinc-800 text-zinc-500 text-sm">
-            No hay deportistas que coincidan con la búsqueda.
+            No hay estudiantes que coincidan con la búsqueda.
           </div>
         ) : (
           filtered.map((est) => {
             const isPagado = est.estado_pago === 'Pagado';
-            const apto = est.apto_medico || 'Apto';
             return (
               <div
                 key={est.id}
@@ -405,9 +324,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
                     </h3>
                     <p className="text-xs text-zinc-400 font-mono mt-0.5">
                       Cédula: {est.cedula}
-                    </p>
-                    <p className="text-xs text-emerald-400 font-semibold mt-1">
-                      {est.disciplina || est.curso} ({est.categoria || 'Libre'})
                     </p>
                   </div>
 
@@ -428,11 +344,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
                     )}
                     <span>{est.estado_pago}</span>
                   </button>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-zinc-400 pt-1 border-t border-zinc-800/50">
-                  <span>Médico: <strong className="text-emerald-400">{apto}</strong></span>
-                  <span>Entrenador: {est.entrenador || 'Asignado'}</span>
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60">
@@ -457,7 +368,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
         )}
       </div>
 
-      {/* MODAL: REGISTRAR ATLETA */}
+      {/* MODAL: REGISTRAR ESTUDIANTE */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-[#18181b] border border-zinc-800 w-full max-w-lg p-6 sm:p-7 rounded-3xl shadow-2xl relative max-h-[92vh] overflow-y-auto">
@@ -470,7 +381,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
 
             <h3 className="text-xl font-bold text-emerald-400 mb-4 flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
-              <span>Nuevo Registro de Atleta / Socio</span>
+              <span>Nuevo Registro de Estudiante</span>
             </h3>
 
             <form onSubmit={handleCreateStudent} className="space-y-4">
@@ -497,107 +408,24 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
                     required
                     value={apellidos}
                     onChange={(e) => setApellidos(e.target.value)}
-                    placeholder="Ej: Pucha"
+                    placeholder="Ej: Castillo"
                     className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-400 text-xs font-medium mb-1.5">
-                    Cédula / Identificación *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={cedula}
-                    onChange={(e) => setCedula(e.target.value)}
-                    placeholder="Ej: 1105432190"
-                    className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm font-mono text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 text-xs font-medium mb-1.5">
-                    Disciplina Deportiva *
-                  </label>
-                  <select
-                    value={disciplina}
-                    onChange={(e) => setDisciplina(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-emerald-500"
-                  >
-                    {DISCIPLINAS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-400 text-xs font-medium mb-1.5">
-                    Categoría
-                  </label>
-                  <select
-                    value={categoria}
-                    onChange={(e) => setCategoria(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-emerald-500"
-                  >
-                    {CATEGORIAS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 text-xs font-medium mb-1.5">
-                    Entrenador Responsable
-                  </label>
-                  <input
-                    type="text"
-                    value={entrenador}
-                    onChange={(e) => setEntrenador(e.target.value)}
-                    placeholder="Ej: Prof. Carlos Vaca"
-                    className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-400 text-xs font-medium mb-1.5">
-                    Aptitud Médica (Ficha)
-                  </label>
-                  <select
-                    value={aptoMedico}
-                    onChange={(e) =>
-                      setAptoMedico(e.target.value as 'Apto' | 'Pendiente' | 'Vencido')
-                    }
-                    className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="Apto">🟢 Apto para entrenamiento</option>
-                    <option value="Pendiente">🟡 Ficha Médica Pendiente</option>
-                    <option value="Vencido">🔴 Certificado Vencido</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 text-xs font-medium mb-1.5">
-                    Contacto de Emergencia
-                  </label>
-                  <input
-                    type="text"
-                    value={contactoEmergencia}
-                    onChange={(e) => setContactoEmergencia(e.target.value)}
-                    placeholder="Ej: Mamá 0987654321"
-                    className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
+              <div>
+                <label className="block text-zinc-400 text-xs font-medium mb-1.5">
+                  Cédula / Identificación *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={cedula}
+                  onChange={(e) => setCedula(e.target.value)}
+                  placeholder="Ej: 1105432190"
+                  className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm font-mono text-white focus:outline-none focus:border-emerald-500"
+                />
               </div>
 
               <div>
@@ -637,7 +465,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
         </div>
       )}
 
-      {/* MODAL: CARNET Y CREDENCIAL DEPORTIVA QR */}
+      {/* MODAL: CARNET Y CREDENCIAL QR */}
       {selectedQrEstudiante && (
         <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fade-in">
           <div className="bg-[#18181b] border border-zinc-800 w-full max-w-sm p-6 sm:p-7 rounded-3xl shadow-2xl text-center relative">
@@ -651,16 +479,13 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
             {/* Carnet Header */}
             <div className="mb-3 bg-gradient-to-r from-emerald-600 to-teal-700 p-3 rounded-2xl text-zinc-950 text-left">
               <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">
-                COMPLEJO DEPORTIVO • CARNET OFICIAL
+                CONTROL DE ACCESO • CARNET OFICIAL
               </span>
               <h3 className="text-base font-black text-white truncate">
                 {selectedQrEstudiante.nombre} {selectedQrEstudiante.apellidos}
               </h3>
-              <div className="flex justify-between items-center text-xs text-emerald-100 font-mono mt-0.5">
-                <span>Céd: {selectedQrEstudiante.cedula}</span>
-                <span className="font-bold bg-zinc-950/40 px-2 py-0.5 rounded text-[10px] text-white">
-                  {selectedQrEstudiante.disciplina || selectedQrEstudiante.curso}
-                </span>
+              <div className="text-xs text-emerald-100 font-mono mt-0.5">
+                <span>Cédula: {selectedQrEstudiante.cedula}</span>
               </div>
             </div>
 
@@ -679,11 +504,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
 
             <div className="text-left bg-zinc-900/90 rounded-2xl p-3 my-3 border border-zinc-800 text-xs space-y-1.5">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Categoría:</span>
-                <span className="text-zinc-200 font-semibold">{selectedQrEstudiante.categoria || 'General'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-500">Membresía:</span>
+                <span className="text-zinc-500">Estado de Cuota:</span>
                 <span
                   className={`font-bold ${
                     selectedQrEstudiante.estado_pago === 'Pagado'
@@ -693,10 +514,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
                 >
                   {selectedQrEstudiante.estado_pago}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-500">Ficha Médica:</span>
-                <span className="text-emerald-400 font-bold">{selectedQrEstudiante.apto_medico || 'Apto'}</span>
               </div>
             </div>
 

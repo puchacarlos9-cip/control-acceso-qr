@@ -54,7 +54,6 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
       const matchSearch =
         l.nombre_estudiante.toLowerCase().includes(term) ||
         l.cedula.includes(term) ||
-        (l.disciplina && l.disciplina.toLowerCase().includes(term)) ||
         l.guardia_responsable.toLowerCase().includes(term);
 
       const matchEstado =
@@ -97,34 +96,31 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
     }));
   }, [logs]);
 
-  // Data for Disciplines Chart
-  const disciplineData = useMemo(() => {
-    const counts: { [key: string]: number } = {};
+  // Data for Access Method Chart
+  const metodoData = useMemo(() => {
+    let qrCount = 0;
+    let cedulaCount = 0;
     logs.forEach((log) => {
-      const disc = log.disciplina || 'General / Socios';
-      counts[disc] = (counts[disc] || 0) + 1;
+      if (log.metodo === 'QR') qrCount++;
+      else cedulaCount++;
     });
 
-    const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4'];
-
-    return Object.keys(counts).map((key, i) => ({
-      name: key,
-      value: counts[key],
-      color: COLORS[i % COLORS.length],
-    }));
+    return [
+      { name: 'Código QR', value: qrCount, color: '#10b981' },
+      { name: 'Cédula Manual', value: cedulaCount, color: '#3b82f6' }
+    ];
   }, [logs]);
 
   // Export CSV function
   const handleExportCSV = () => {
     if (logs.length === 0) return;
-    const headers = ['ID,Fecha y Hora,Atleta / Socio,Cédula,Disciplina,Método,Estado Ingreso,Motivo,Operador Guard'];
+    const headers = ['ID,Fecha y Hora,Estudiante,Cédula,Método,Estado Ingreso,Motivo,Operador'];
     const rows = logs.map((l) =>
       [
         l.id,
         `"${l.fecha_hora}"`,
         `"${l.nombre_estudiante}"`,
         `"${l.cedula}"`,
-        `"${l.disciplina || 'N/A'}"`,
         `"${l.metodo}"`,
         `"${l.estado_ingreso}"`,
         `"${l.motivo || ''}"`,
@@ -136,7 +132,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `auditoria_complejo_deportivo_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `auditoria_accesos_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -273,15 +269,15 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
               </div>
             </div>
 
-            {/* Disciplines Pie Breakdown */}
+            {/* Access Method Breakdown */}
             <div className="bg-[#121212] border border-zinc-800/80 rounded-3xl p-5 shadow-xl flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Layers className="w-4 h-4 text-teal-400" />
-                  <span>Aforo por Disciplina Deportiva</span>
+                  <span>Método de Validación de Acceso</span>
                 </h3>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Proporción de asistencia según disciplina.
+                  Proporción de lecturas QR vs Cédula manual.
                 </p>
               </div>
 
@@ -289,7 +285,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={disciplineData}
+                      data={metodoData}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
@@ -298,7 +294,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
                       innerRadius={40}
                       paddingAngle={4}
                     >
-                      {disciplineData.map((entry, index) => (
+                      {metodoData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -315,7 +311,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
               </div>
 
               <div className="space-y-1 text-xs">
-                {disciplineData.map((d) => (
+                {metodoData.map((d) => (
                   <div key={d.name} className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-zinc-400">
                       <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
@@ -425,18 +421,17 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
                 <thead className="text-xs uppercase bg-zinc-900/80 text-zinc-500 border-b border-zinc-800">
                   <tr>
                     <th className="px-6 py-4 font-semibold">Fecha y Hora</th>
-                    <th className="px-6 py-4 font-semibold">Atleta / Socio</th>
+                    <th className="px-6 py-4 font-semibold">Estudiante</th>
                     <th className="px-6 py-4 font-semibold">Cédula</th>
-                    <th className="px-6 py-4 font-semibold">Disciplina</th>
-                    <th className="px-6 py-4 font-semibold">Operador Guard</th>
+                    <th className="px-6 py-4 font-semibold">Operador</th>
                     <th className="px-6 py-4 font-semibold text-center">Método</th>
-                    <th className="px-6 py-4 font-semibold text-center">Estado Access</th>
+                    <th className="px-6 py-4 font-semibold text-center">Estado Acceso</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/50">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-10 text-zinc-500">
+                      <td colSpan={6} className="text-center py-10 text-zinc-500">
                         No se encontraron registros en el historial de auditoría.
                       </td>
                     </tr>
@@ -458,9 +453,6 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
                           </td>
                           <td className="px-6 py-4 font-mono text-zinc-300">
                             {log.cedula}
-                          </td>
-                          <td className="px-6 py-4 text-emerald-400 text-xs font-semibold">
-                            {log.disciplina || 'General'}
                           </td>
                           <td className="px-6 py-4 text-zinc-400">
                             {log.guardia_responsable}
@@ -515,11 +507,6 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({ logs, onClearLogs })
                           <div className="font-bold text-white text-base">
                             {log.nombre_estudiante}
                           </div>
-                          {log.disciplina && (
-                            <div className="text-xs text-emerald-400 font-semibold">
-                              {log.disciplina}
-                            </div>
-                          )}
                           <div className="text-xs text-zinc-400 font-mono">
                             Cédula: {log.cedula}
                           </div>

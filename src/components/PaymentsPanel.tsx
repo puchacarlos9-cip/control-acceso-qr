@@ -157,12 +157,10 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
 
   const filteredEstudiantes = estudiantes.filter((est) => {
     const term = searchTerm.toLowerCase().trim();
-    const disc = (est.disciplina || est.curso || '').toLowerCase();
     const matchSearch =
       est.nombre.toLowerCase().includes(term) ||
       est.apellidos.toLowerCase().includes(term) ||
-      est.cedula.includes(term) ||
-      disc.includes(term);
+      est.cedula.includes(term);
     if (filter === 'todos') return matchSearch;
     return matchSearch && est.estado_pago === filter;
   });
@@ -379,9 +377,6 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                         <td className="px-6 py-4 font-bold text-white">
                           <div>
                             <span>{est.nombre} {est.apellidos}</span>
-                            <span className="text-xs text-emerald-400 block font-normal mt-0.5">
-                              {est.disciplina || est.curso}
-                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 font-mono text-zinc-400">{est.cedula}</td>
@@ -451,9 +446,6 @@ export const PaymentsPanel: React.FC<PaymentsPanelProps> = ({
                       <div>
                         <div className="font-bold text-white text-base">
                           {est.nombre} {est.apellidos}
-                        </div>
-                        <div className="text-xs text-emerald-400 font-medium">
-                          {est.disciplina || est.curso}
                         </div>
                         <div className="text-xs text-zinc-400 font-mono mt-0.5">
                           Cédula: {est.cedula}

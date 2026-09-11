@@ -28,7 +28,7 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-// Initial Demo/Fallback Students (Complejo Deportivo - Atletas Estudiantes)
+// Initial Demo/Fallback Students
 const DEFAULT_ESTUDIANTES: Estudiante[] = [
   {
     id: 'est-1',
@@ -37,13 +37,7 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     cedula: '1105432190',
     estado_pago: 'Pagado',
     qr_uuid: 'a1b2c3d4-e5f6-4a11-b222-110543219000',
-    fecha_registro: '2026-08-01 10:00:00',
-    curso: 'Natación - Sub-18',
-    disciplina: 'Natación',
-    categoria: 'Sub-18',
-    entrenador: 'Prof. Roberto Silva',
-    apto_medico: 'Apto',
-    contacto_emergencia: '0991234567 (Madre)'
+    fecha_registro: '2026-08-01 10:00:00'
   },
   {
     id: 'est-2',
@@ -52,13 +46,7 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     cedula: '1723456789',
     estado_pago: 'Pagado',
     qr_uuid: 'b2c3d4e5-f6a1-4b22-c333-172345678900',
-    fecha_registro: '2026-08-01 10:15:00',
-    curso: 'Gimnasia Artística - Sub-14',
-    disciplina: 'Gimnasia Artística',
-    categoria: 'Sub-14',
-    entrenador: 'Dra. Elena Paz',
-    apto_medico: 'Apto',
-    contacto_emergencia: '0987654321 (Padre)'
+    fecha_registro: '2026-08-01 10:15:00'
   },
   {
     id: 'est-3',
@@ -67,13 +55,7 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     cedula: '0912345678',
     estado_pago: 'Pendiente',
     qr_uuid: 'c3d4e5f6-a1b2-4c33-d444-091234567800',
-    fecha_registro: '2026-08-02 14:20:00',
-    curso: 'Fútbol Formativo - Sub-16',
-    disciplina: 'Fútbol',
-    categoria: 'Sub-16',
-    entrenador: 'Prof. Marco Torres',
-    apto_medico: 'Pendiente',
-    contacto_emergencia: '0995554433 (Tutor)'
+    fecha_registro: '2026-08-02 14:20:00'
   },
   {
     id: 'est-4',
@@ -82,13 +64,7 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     cedula: '1104567890',
     estado_pago: 'Pagado',
     qr_uuid: 'd4e5f6a1-b2c3-4d44-e555-110456789000',
-    fecha_registro: '2026-08-03 08:30:00',
-    curso: 'Atletismo - Selección',
-    disciplina: 'Atletismo',
-    categoria: 'Selección',
-    entrenador: 'Prof. Luis Vega',
-    apto_medico: 'Apto',
-    contacto_emergencia: '0998887766 (Madre)'
+    fecha_registro: '2026-08-03 08:30:00'
   },
   {
     id: 'est-5',
@@ -97,13 +73,7 @@ const DEFAULT_ESTUDIANTES: Estudiante[] = [
     cedula: '1755443322',
     estado_pago: 'Pendiente',
     qr_uuid: 'e5f6a1b2-c3d4-4e55-f666-175544332200',
-    fecha_registro: '2026-08-03 09:10:00',
-    curso: 'Baloncesto - Sub-15',
-    disciplina: 'Baloncesto',
-    categoria: 'Sub-15',
-    entrenador: 'Prof. Diego Morales',
-    apto_medico: 'Vencido',
-    contacto_emergencia: '0994443322 (Padre)'
+    fecha_registro: '2026-08-03 09:10:00'
   }
 ];
 
@@ -365,12 +335,6 @@ export async function fetchEstudiantes(): Promise<Estudiante[]> {
         estado_pago: data.estado_pago || 'Pendiente',
         qr_uuid: data.qr_uuid || '',
         fecha_registro: data.fecha_registro ? (typeof data.fecha_registro.toDate === 'function' ? data.fecha_registro.toDate().toLocaleString('es-EC') : String(data.fecha_registro)) : 'Reciente',
-        curso: data.curso || data.disciplina || 'Formación Deportiva',
-        disciplina: data.disciplina || 'General',
-        categoria: data.categoria || 'Sub-16',
-        entrenador: data.entrenador || 'Por Asignar',
-        apto_medico: data.apto_medico || 'Apto',
-        contacto_emergencia: data.contacto_emergencia || 'Sin registrar',
         fecha_ultimo_pago: data.fecha_ultimo_pago,
         fecha_vencimiento_pago: data.fecha_vencimiento_pago,
         monto_ultimo_pago: data.monto_ultimo_pago

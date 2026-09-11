@@ -54,12 +54,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
     permitido: boolean;
     nombre: string;
     cedula: string;
-    disciplina?: string;
-    categoria?: string;
-    entrenador?: string;
-    apto_medico?: string;
     estado_pago?: string;
-    contacto_emergencia?: string;
     motivo?: string;
   }>({
     isOpen: false,
@@ -128,18 +123,13 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
 
   const verifyStudentEntry = (est: Estudiante, metodo: 'QR' | 'Cédula') => {
     const pagoOk = est.estado_pago === 'Pagado';
-    const medicoOk = est.apto_medico === 'Apto' || !est.apto_medico;
 
     let motivo: string | undefined = undefined;
-    if (!pagoOk && !medicoOk) {
-      motivo = 'Membresía en mora y certificado médico vencido/pendiente.';
-    } else if (!pagoOk) {
-      motivo = 'Membresía mensual en mora. Requiere actualizar cuota.';
-    } else if (!medicoOk) {
-      motivo = `Certificado médico en estado: ${est.apto_medico}. Inhabilitado para entrenar.`;
+    if (!pagoOk) {
+      motivo = 'Cuota mensual en mora. Requiere regularizar pago para acceder.';
     }
 
-    const permitido = pagoOk && medicoOk;
+    const permitido = pagoOk;
 
     onRegistrarAcceso(est, metodo, permitido, motivo);
     setResultModal({
@@ -147,12 +137,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
       permitido,
       nombre: `${est.nombre} ${est.apellidos}`,
       cedula: est.cedula,
-      disciplina: est.disciplina || est.curso,
-      categoria: est.categoria,
-      entrenador: est.entrenador,
-      apto_medico: est.apto_medico || 'Apto',
       estado_pago: est.estado_pago,
-      contacto_emergencia: est.contacto_emergencia,
       motivo,
     });
   };
@@ -169,7 +154,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
       setIsSearching(false);
       const est = estudiantes.find((item) => item.cedula === clean);
       if (!est) {
-        onShowToast('Socio/Atleta NO registrado en el Complejo Deportivo', 'error');
+        onShowToast('Estudiante NO registrado en el sistema', 'error');
       } else {
         setShowCedulaModal(false);
         setInputCedula('');
@@ -227,8 +212,8 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
           <div className="bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-2xl flex items-center gap-2 text-xs">
             <Activity className="w-4 h-4 text-emerald-400" />
             <div>
-              <div className="text-zinc-400 text-[10px] uppercase font-bold">Aforo Deportivo</div>
-              <div className="font-mono text-emerald-400 font-bold">{accesosPermitidosHoy} Atletas</div>
+              <div className="text-zinc-400 text-[10px] uppercase font-bold">Aforo Estudiantil</div>
+              <div className="font-mono text-emerald-400 font-bold">{accesosPermitidosHoy} Estudiantes</div>
             </div>
           </div>
 
@@ -248,7 +233,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
           Control de Acceso e Ingreso
         </h1>
         <p className="text-zinc-400 text-xs sm:text-base">
-          Verificación dual de mensualidades y aptitud médica para atletas y estudiantes socios
+          Verificación de cuota y control de acceso estudiantil con código QR
         </p>
 
         {/* Zone Selector Pills */}
@@ -351,7 +336,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                         {log.nombre_estudiante}
                       </p>
                       <p className="text-xs text-zinc-400">
-                        Céd: {log.cedula} • {log.disciplina || 'Atleta'} • {log.metodo}
+                        Céd: {log.cedula} • {log.metodo}
                       </p>
                     </div>
                   </div>
@@ -389,7 +374,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                 <CreditCard className="w-8 h-8" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-white">
-                Ingresar Cédula de Atleta
+                Ingresar Cédula de Estudiante
               </h3>
               <p className="text-zinc-400 text-xs mt-1">
                 Escribe la identificación para consultar derecho de ingreso
@@ -476,14 +461,14 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                     type="button"
                     onClick={() => handleSimulateQr(est)}
                     className={`p-2 rounded-xl text-left border transition text-xs ${
-                      est.estado_pago === 'Pagado' && (est.apto_medico === 'Apto' || !est.apto_medico)
+                      est.estado_pago === 'Pagado'
                         ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40'
                         : 'bg-red-950/30 border-red-500/30 text-red-300 hover:bg-red-900/40'
                     }`}
                   >
                     <div className="font-bold truncate">{est.nombre} {est.apellidos.charAt(0)}.</div>
                     <div className="text-[10px] opacity-80 truncate">
-                      {est.disciplina || est.curso} • {est.estado_pago}
+                      Céd: {est.cedula} • {est.estado_pago}
                     </div>
                   </button>
                 ))}
@@ -503,7 +488,7 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
         </div>
       )}
 
-      {/* MODAL: RESULTADO DEL ACCESO (VERIFICACIÓN DUAL DEPORTIVA) */}
+      {/* MODAL: RESULTADO DEL ACCESO */}
       {resultModal.isOpen && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
           <div className="bg-[#18181b] border border-zinc-800 w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl text-center relative">
@@ -534,28 +519,12 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                 </span>
               </div>
 
-              {/* Sports details */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800/80 text-xs">
-                <div>
-                  <span className="text-zinc-500 block text-[10px]">Disciplina & Categoría</span>
-                  <span className="font-semibold text-emerald-300">
-                    {resultModal.disciplina} {resultModal.categoria ? `(${resultModal.categoria})` : ''}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-zinc-500 block text-[10px]">Entrenador Responsable</span>
-                  <span className="font-semibold text-zinc-200">
-                    {resultModal.entrenador || 'Asignado'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Status Badges Dual */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800/80 text-xs">
-                <div className="p-2 rounded-xl bg-zinc-800/60 flex items-center justify-between">
-                  <span className="text-zinc-400 text-[11px]">Cuota Mensual</span>
+              {/* Status Badge Cuota */}
+              <div className="pt-2 border-t border-zinc-800/80 text-xs">
+                <div className="p-2.5 rounded-xl bg-zinc-800/60 flex items-center justify-between">
+                  <span className="text-zinc-300 font-medium text-xs">Estado de Cuota</span>
                   <span
-                    className={`font-bold px-2 py-0.5 rounded-md text-[10px] ${
+                    className={`font-bold px-2.5 py-1 rounded-md text-xs ${
                       resultModal.estado_pago === 'Pagado'
                         ? 'bg-emerald-500/20 text-emerald-400'
                         : 'bg-red-500/20 text-red-400'
@@ -564,32 +533,12 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
                     {resultModal.estado_pago}
                   </span>
                 </div>
-
-                <div className="p-2 rounded-xl bg-zinc-800/60 flex items-center justify-between">
-                  <span className="text-zinc-400 text-[11px]">Ficha Médica</span>
-                  <span
-                    className={`font-bold px-2 py-0.5 rounded-md text-[10px] ${
-                      resultModal.apto_medico === 'Apto'
-                        ? 'bg-emerald-500/20 text-emerald-400'
-                        : 'bg-amber-500/20 text-amber-400'
-                    }`}
-                  >
-                    {resultModal.apto_medico}
-                  </span>
-                </div>
               </div>
-
-              {resultModal.contacto_emergencia && (
-                <div className="text-[11px] text-zinc-400 flex items-center gap-1.5 pt-1">
-                  <Phone className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Emergencia: {resultModal.contacto_emergencia}</span>
-                </div>
-              )}
 
               <div className="pt-2 border-t border-zinc-800">
                 {resultModal.permitido ? (
                   <span className="text-emerald-400 font-semibold text-xs flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" /> Torniquete desbloqueado. Bienvenido a su entrenamiento.
+                    <CheckCircle2 className="w-4 h-4" /> Torniquete desbloqueado. Bienvenido.
                   </span>
                 ) : (
                   <span className="text-red-400 font-semibold text-xs flex items-center gap-1">

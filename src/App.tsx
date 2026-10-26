@@ -8,20 +8,18 @@ import {
   RolUsuario,
 } from './types';
 import {
-  subscribeEstudiantes,
-  subscribeUsuarios,
-  subscribeLogsAcceso,
-  subscribePagos,
+  fetchEstudiantes,
   agregarEstudiante,
-  actualizarEstudiante,
   borrarEstudiante,
   toggleEstadoPagoEstudiante,
+  fetchUsuarios,
   agregarUsuario,
   borrarUsuario,
+  fetchLogsAcceso,
   registrarAccesoLog,
+  fetchPagos,
   registrarPago,
   checkFirebaseConnection,
-  seedFirestoreIfEmpty,
   isFirebaseOnline as isFbOnlineVal,
 } from './firebase/config';
 import { LoginScreen } from './components/LoginScreen';
@@ -91,76 +89,45 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Real-time synchronization with Firestore onSnapshot
-  useEffect(() => {
-    setIsLoadingData(true);
-    let unsubEst: (() => void) | undefined;
-    let unsubUsr: (() => void) | undefined;
-    let unsubLogs: (() => void) | undefined;
-    let unsubPagos: (() => void) | undefined;
-
-    async function initRealtime() {
-      try {
-        const isOnline = await checkFirebaseConnection();
-        setIsFirebaseOnline(isOnline);
-        if (isOnline) {
-          await seedFirestoreIfEmpty();
-        }
-      } catch (err) {
-        console.warn('Conexión inicial:', err);
-      }
-
-      unsubEst = subscribeEstudiantes((data) => {
-        setEstudiantes(data);
-        setIsLoadingData(false);
-      });
-
-      unsubUsr = subscribeUsuarios((data) => {
-        setUsuarios(data);
-      });
-
-      unsubLogs = subscribeLogsAcceso((data) => {
-        setLogsAcceso(data);
-      });
-
-      unsubPagos = subscribePagos((data) => {
-        setPagos(data);
-      });
-    }
-
-    initRealtime();
-
-    return () => {
-      if (unsubEst) unsubEst();
-      if (unsubUsr) unsubUsr();
-      if (unsubLogs) unsubLogs();
-      if (unsubPagos) unsubPagos();
-    };
-  }, []);
-
-  // Refresh manually
-  const handleRefresh = async () => {
-    setIsLoadingData(true);
+  // Load all data from Hybrid Firebase / Local Cache
+  const loadAllData = useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingData(true);
     try {
-      const isOnline = await checkFirebaseConnection();
-      setIsFirebaseOnline(isOnline);
-      showToast(
-        isOnline
-          ? 'Conectado y sincronizado con Firebase en tiempo real'
-          : 'Trabajando en modo local',
-        'info'
-      );
-    } catch {
-      // ignore
+      await checkFirebaseConnection();
+      setIsFirebaseOnline(isFbOnlineVal);
+
+      const [listaEst, listaUsr, listaLogs, listaPagos] = await Promise.all([
+        fetchEstudiantes(),
+        fetchUsuarios(),
+        fetchLogsAcceso(),
+        fetchPagos(),
+      ]);
+
+      setEstudiantes(listaEst);
+      setUsuarios(listaUsr);
+      setLogsAcceso(listaLogs);
+      setPagos(listaPagos);
+    } catch (err) {
+      console.warn('Error cargando datos:', err);
+      showToast('Cargando en modo caché local responsive', 'info');
     } finally {
-      setTimeout(() => setIsLoadingData(false), 500);
+      setIsLoadingData(false);
     }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
 
   // PAGOS HANDLER
   const handleRegistrarPago = async (nuevoPago: Omit<Pago, 'id'>) => {
-    await registrarPago(nuevoPago);
-    showToast('Pago registrado correctamente en Firebase', 'success');
+    const { pago, estudianteActualizado } = await registrarPago(nuevoPago);
+    setPagos((prev) => [pago, ...prev]);
+    if (estudianteActualizado) {
+      setEstudiantes((prev) =>
+        prev.map((e) => (e.id === estudianteActualizado.id ? estudianteActualizado : e))
+      );
+    }
   };
 
   // Handle Login & Session
@@ -186,8 +153,8 @@ export default function App() {
 
   // ESTUDIANTES CRUD
   const handleAddEstudiante = async (nuevo: Omit<Estudiante, 'id'>) => {
-    await agregarEstudiante(nuevo);
-    showToast('Estudiante registrado exitosamente en Firebase', 'success');
+    const agregado = await agregarEstudiante(nuevo);
+    setEstudiantes((prev) => [agregado, ...prev]);
   };
 
   const handleDeleteEstudiante = (id: string) => {
@@ -203,6 +170,7 @@ export default function App() {
       onConfirm: async () => {
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         await borrarEstudiante(id);
+        setEstudiantes((prev) => prev.filter((e) => e.id !== id));
         showToast('Estudiante eliminado exitosamente', 'success');
       },
     });
@@ -213,6 +181,9 @@ export default function App() {
     nuevoEstado: 'Pagado' | 'Pendiente'
   ) => {
     await toggleEstadoPagoEstudiante(id, nuevoEstado);
+    setEstudiantes((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, estado_pago: nuevoEstado } : e))
+    );
     const msg =
       nuevoEstado === 'Pagado'
         ? '✅ Estado de pensión actualizado: Pagado (Acceso Libre)'
@@ -220,18 +191,10 @@ export default function App() {
     showToast(msg, nuevoEstado === 'Pagado' ? 'success' : 'info');
   };
 
-  const handleUpdateEstudiante = async (
-    id: string,
-    datos: Partial<Omit<Estudiante, 'id'>>
-  ) => {
-    await actualizarEstudiante(id, datos);
-    showToast('Datos del estudiante actualizados con éxito en Firebase', 'success');
-  };
-
   // USUARIOS CRUD (Súper Admin)
   const handleAddUsuario = async (nuevo: Omit<Usuario, 'id'>) => {
-    await agregarUsuario(nuevo);
-    showToast('Usuario personal creado en Firebase', 'success');
+    const agregado = await agregarUsuario(nuevo);
+    setUsuarios((prev) => [agregado, ...prev]);
   };
 
   const handleDeleteUsuario = (id: string) => {
@@ -250,6 +213,7 @@ export default function App() {
       onConfirm: async () => {
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         await borrarUsuario(id);
+        setUsuarios((prev) => prev.filter((u) => u.id !== id));
         showToast('Acceso revocado correctamente', 'success');
       },
     });
@@ -263,7 +227,7 @@ export default function App() {
     motivo?: string
   ) => {
     const gNombre = user ? user.nombre : 'Guardia de Seguridad';
-    await registrarAccesoLog({
+    const log = await registrarAccesoLog({
       nombre_estudiante: `${est.nombre} ${est.apellidos}`,
       cedula: est.cedula,
       guardia_responsable: gNombre,
@@ -272,6 +236,8 @@ export default function App() {
       metodo: metodo,
       motivo: motivo,
     });
+
+    setLogsAcceso((prev) => [log, ...prev]);
   };
 
   // 1. Unauthenticated -> Show Responsive Login Screen
@@ -343,10 +309,10 @@ export default function App() {
               {activeTab === 'usuarios' && 'Gestión de Personal y Turnos'}
             </h1>
             <button
-              onClick={handleRefresh}
+              onClick={() => loadAllData(false)}
               disabled={isLoadingData}
               className="p-2 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white transition disabled:opacity-50"
-              title="Refrescar sincronización"
+              title="Refrescar datos"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isLoadingData ? 'animate-spin' : ''}`}
@@ -368,7 +334,6 @@ export default function App() {
             <StudentsPanel
               estudiantes={estudiantes}
               onAddEstudiante={handleAddEstudiante}
-              onUpdateEstudiante={handleUpdateEstudiante}
               onDeleteEstudiante={handleDeleteEstudiante}
               onToggleEstadoPago={handleToggleEstadoPago}
               onShowToast={showToast}

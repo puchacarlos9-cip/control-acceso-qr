@@ -13,6 +13,7 @@ import {
   subscribeLogsAcceso,
   subscribePagos,
   agregarEstudiante,
+  actualizarEstudiante,
   borrarEstudiante,
   toggleEstadoPagoEstudiante,
   agregarUsuario,
@@ -137,6 +138,25 @@ export default function App() {
     };
   }, []);
 
+  // Refresh manually
+  const handleRefresh = async () => {
+    setIsLoadingData(true);
+    try {
+      const isOnline = await checkFirebaseConnection();
+      setIsFirebaseOnline(isOnline);
+      showToast(
+        isOnline
+          ? 'Conectado y sincronizado con Firebase en tiempo real'
+          : 'Trabajando en modo local',
+        'info'
+      );
+    } catch {
+      // ignore
+    } finally {
+      setTimeout(() => setIsLoadingData(false), 500);
+    }
+  };
+
   // PAGOS HANDLER
   const handleRegistrarPago = async (nuevoPago: Omit<Pago, 'id'>) => {
     await registrarPago(nuevoPago);
@@ -198,6 +218,14 @@ export default function App() {
         ? '✅ Estado de pensión actualizado: Pagado (Acceso Libre)'
         : '⚠️ Estado de pensión actualizado: Pendiente (Acceso Bloqueado)';
     showToast(msg, nuevoEstado === 'Pagado' ? 'success' : 'info');
+  };
+
+  const handleUpdateEstudiante = async (
+    id: string,
+    datos: Partial<Omit<Estudiante, 'id'>>
+  ) => {
+    await actualizarEstudiante(id, datos);
+    showToast('Datos del estudiante actualizados con éxito en Firebase', 'success');
   };
 
   // USUARIOS CRUD (Súper Admin)
@@ -315,10 +343,10 @@ export default function App() {
               {activeTab === 'usuarios' && 'Gestión de Personal y Turnos'}
             </h1>
             <button
-              onClick={() => loadAllData(false)}
+              onClick={handleRefresh}
               disabled={isLoadingData}
               className="p-2 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white transition disabled:opacity-50"
-              title="Refrescar datos"
+              title="Refrescar sincronización"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isLoadingData ? 'animate-spin' : ''}`}
@@ -340,6 +368,7 @@ export default function App() {
             <StudentsPanel
               estudiantes={estudiantes}
               onAddEstudiante={handleAddEstudiante}
+              onUpdateEstudiante={handleUpdateEstudiante}
               onDeleteEstudiante={handleDeleteEstudiante}
               onToggleEstadoPago={handleToggleEstadoPago}
               onShowToast={showToast}

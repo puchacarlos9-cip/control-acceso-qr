@@ -568,6 +568,22 @@ export async function toggleEstadoPagoEstudiante(
   saveLocalEstudiantes(lista);
 }
 
+export async function actualizarEstudiante(
+  id: string,
+  datos: Partial<Omit<Estudiante, 'id'>>
+): Promise<void> {
+  try {
+    const ref = doc(db, 'estudiantes', id);
+    await updateDoc(ref, datos);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `estudiantes/${id}`);
+  }
+  const lista = getLocalEstudiantes().map((e) =>
+    e.id === id ? { ...e, ...datos } : e
+  );
+  saveLocalEstudiantes(lista);
+}
+
 // USUARIOS MUTATIONS
 export async function agregarUsuario(nuevo: Omit<Usuario, 'id'>): Promise<Usuario> {
   try {

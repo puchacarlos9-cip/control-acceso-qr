@@ -7,6 +7,15 @@
   .animate-slide-right {
     animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  .animate-shake {
+    animation: shake 0.35s ease-in-out;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
 }
 
 @keyframes fadeIn {

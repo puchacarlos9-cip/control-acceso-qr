@@ -11,6 +11,7 @@ import {
   X,
   History,
   AlertCircle,
+  AlertTriangle,
   Trophy,
   Activity,
   MapPin,
@@ -45,8 +46,85 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
   const [showCedulaModal, setShowCedulaModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [inputCedula, setInputCedula] = useState('');
+  const [cedulaAvisoExceso, setCedulaAvisoExceso] = useState(false);
+  const [cedulaAvisoLetra, setCedulaAvisoLetra] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedZone, setSelectedZone] = useState('Ingreso Principal');
+
+  const handleCedulaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.key === 'Backspace' ||
+      e.key === 'Delete' ||
+      e.key === 'Tab' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight' ||
+      e.key === 'Enter' ||
+      e.key === 'Escape'
+    ) {
+      setCedulaAvisoLetra(false);
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      return;
+    }
+    if (e.key.length === 1) {
+      if (!/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        setCedulaAvisoLetra(true);
+        setCedulaAvisoExceso(false);
+        onShowToast('⚠️ Solo se aceptan números', 'error');
+        return;
+      }
+      setCedulaAvisoLetra(false);
+      const target = e.currentTarget;
+      const hasSelection = (target.selectionEnd ?? 0) - (target.selectionStart ?? 0) > 0;
+      if (inputCedula.length >= 10 && !hasSelection) {
+        e.preventDefault();
+        setCedulaAvisoExceso(true);
+        onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+      } else {
+        setCedulaAvisoExceso(false);
+      }
+    }
+  };
+
+  const handleCedulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawVal = e.target.value;
+    if (/[^0-9]/.test(rawVal)) {
+      setCedulaAvisoLetra(true);
+      onShowToast('⚠️ Solo se aceptan números', 'error');
+    } else {
+      setCedulaAvisoLetra(false);
+    }
+
+    const numsOnly = rawVal.replace(/\D/g, '');
+    if (numsOnly.length > 10) {
+      setCedulaAvisoExceso(true);
+      onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+      setInputCedula(numsOnly.slice(0, 10));
+    } else {
+      setInputCedula(numsOnly);
+      if (numsOnly.length < 10) {
+        setCedulaAvisoExceso(false);
+      }
+    }
+  };
+
+  const handleCedulaPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text');
+    if (/[^0-9]/.test(pasted)) {
+      setCedulaAvisoLetra(true);
+      onShowToast('⚠️ Solo se aceptan números', 'error');
+    }
+    const numsOnly = pasted.replace(/\D/g, '');
+    const target = e.currentTarget;
+    const selectionLength = (target.selectionEnd ?? 0) - (target.selectionStart ?? 0);
+    const currentLength = inputCedula.length - selectionLength;
+    if (currentLength + numsOnly.length > 10) {
+      setCedulaAvisoExceso(true);
+      onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+    }
+  };
 
   // Result Modal State
   const [resultModal, setResultModal] = useState<{
@@ -144,9 +222,9 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
 
   const handleVerifyCedula = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const clean = inputCedula.trim();
+    const clean = inputCedula.replace(/\D/g, '').slice(0, 10);
     if (!clean) {
-      return onShowToast('Por favor ingresa un número de cédula', 'error');
+      return onShowToast('Por favor ingresa un número de cédula válido', 'error');
     }
 
     setIsSearching(true);
@@ -260,6 +338,8 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
           onClick={() => {
             setShowCedulaModal(true);
             setInputCedula('');
+            setCedulaAvisoExceso(false);
+            setCedulaAvisoLetra(false);
           }}
           className="bg-[#18181b] border border-zinc-800/80 hover:border-blue-500/60 hover:bg-zinc-800/90 transition-all duration-300 rounded-3xl p-6 sm:p-10 flex flex-col items-center justify-center w-full shadow-lg group active:scale-[0.98]"
         >
@@ -364,7 +444,11 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-[#18181b] border border-zinc-800 w-full max-w-sm p-6 sm:p-8 rounded-3xl shadow-2xl relative">
             <button
-              onClick={() => setShowCedulaModal(false)}
+              onClick={() => {
+                setShowCedulaModal(false);
+                setCedulaAvisoExceso(false);
+                setCedulaAvisoLetra(false);
+              }}
               className="absolute top-4 right-4 text-zinc-400 hover:text-white p-2"
             >
               <X className="w-5 h-5" />
@@ -382,18 +466,71 @@ export const GuardTerminal: React.FC<GuardTerminalProps> = ({
             </div>
 
             <form onSubmit={handleVerifyCedula}>
-              <input
-                type="text"
-                autoFocus
-                value={inputCedula}
-                onChange={(e) => setInputCedula(e.target.value)}
-                placeholder="Ej: 1105432190"
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-4 text-center text-xl tracking-widest text-white focus:outline-none focus:border-blue-500 mb-6 font-mono"
-              />
+              <div className="relative mb-2">
+                <input
+                  type="text"
+                  autoFocus
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={inputCedula}
+                  onKeyDown={handleCedulaKeyDown}
+                  onChange={handleCedulaChange}
+                  onPaste={handleCedulaPaste}
+                  placeholder="Ej: 1105432190"
+                  className={`w-full bg-zinc-900 border rounded-2xl px-4 py-4 text-center text-xl tracking-widest text-white focus:outline-none font-mono transition ${
+                    cedulaAvisoLetra
+                      ? 'border-amber-500 ring-2 ring-amber-500/20'
+                      : cedulaAvisoExceso
+                      ? 'border-amber-500 ring-2 ring-amber-500/20'
+                      : 'border-zinc-700 focus:border-blue-500'
+                  }`}
+                />
+              </div>
+
+              {cedulaAvisoLetra ? (
+                <div className="flex items-start gap-2.5 p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs text-left animate-shake">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-amber-400 block text-xs">
+                      Solo se aceptan números
+                    </span>
+                    <span className="text-zinc-300 text-[11px] leading-tight block mt-0.5">
+                      No se permiten letras ni caracteres especiales en la cédula. Ingrese únicamente números del 0 al 9.
+                    </span>
+                  </div>
+                </div>
+              ) : cedulaAvisoExceso ? (
+                <div className="flex items-start gap-2.5 p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs text-left animate-shake">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-amber-400 block">
+                      ¡Límite de dígitos alcanzado!
+                    </span>
+                    <span className="text-zinc-300 text-[11px] leading-tight block mt-0.5">
+                      Está poniendo números de más de lo que contiene una cédula. La cédula ecuatoriana contiene exactamente 10 dígitos.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center mb-6 px-1 text-xs text-zinc-400">
+                  <span>Solo números (exactamente 10 dígitos)</span>
+                  <span
+                    className={`font-mono font-medium ${
+                      inputCedula.length === 10 ? 'text-blue-400' : 'text-zinc-500'
+                    }`}
+                  >
+                    {inputCedula.length}/10
+                  </span>
+                </div>
+              )}
+
               <div className="flex flex-col-reverse sm:flex-row gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowCedulaModal(false)}
+                  onClick={() => {
+                    setShowCedulaModal(false);
+                    setCedulaAvisoExceso(false);
+                  }}
                   className="w-full sm:flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-3.5 rounded-xl transition font-medium text-sm"
                 >
                   Cancelar

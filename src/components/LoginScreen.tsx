@@ -27,8 +27,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
     setIsLoading(true);
     setTimeout(() => {
+      const pClean = String(password).trim();
       const found = usuarios.find(
-        (u) => u.usuario.toLowerCase() === uClean && u.password === password
+        (u) =>
+          (u.usuario || '').toLowerCase().trim() === uClean &&
+          String(u.password).trim() === pClean
       );
       setIsLoading(false);
 

@@ -173,10 +173,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <WifiOff className="w-3.5 h-3.5 text-amber-400" />
               )}
               <span className="text-zinc-300 font-medium">
-                {isFirebaseOnline ? 'Firebase Activo' : 'Modo Local / Demo'}
+                {isFirebaseOnline ? 'Firebase en Tiempo Real' : 'Modo Local / Demo'}
               </span>
             </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isFirebaseOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+              }`}
+            />
           </div>
 
           <button

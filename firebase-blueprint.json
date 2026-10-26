@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "estudiante": {
+      "title": "Estudiante",
+      "description": "Estudiante o socio para control de acceso con código QR y estado de pensiones",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "apellidos": { "type": "string" },
+        "cedula": { "type": "string" },
+        "estado_pago": { "type": "string", "enum": ["Pagado", "Pendiente"] },
+        "qr_uuid": { "type": "string" },
+        "fecha_registro": { "type": "string" },
+        "fecha_ultimo_pago": { "type": "string" },
+        "fecha_vencimiento_pago": { "type": "string" },
+        "monto_ultimo_pago": { "type": "number" }
+      },
+      "required": ["nombre", "apellidos", "cedula", "estado_pago", "qr_uuid"]
+    },
+    "usuario": {
+      "title": "Usuario",
+      "description": "Operadores de guardia, administradores y super administradores",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "usuario": { "type": "string" },
+        "password": { "type": "string" },
+        "rol": { "type": "string", "enum": ["super_admin", "admin", "guardia"] },
+        "turno": { "type": "string" },
+        "fecha_registro": { "type": "string" }
+      },
+      "required": ["nombre", "usuario", "password", "rol"]
+    },
+    "accesoLog": {
+      "title": "AccesoLog",
+      "description": "Historial de validaciones de acceso en torniquete o guardia",
+      "type": "object",
+      "properties": {
+        "nombre_estudiante": { "type": "string" },
+        "cedula": { "type": "string" },
+        "guardia_responsable": { "type": "string" },
+        "fecha_hora": { "type": "string" },
+        "estado_ingreso": { "type": "string", "enum": ["Permitido", "Denegado"] },
+        "metodo": { "type": "string", "enum": ["QR", "Cédula"] },
+        "motivo": { "type": "string" },
+        "zona_acceso": { "type": "string" }
+      },
+      "required": ["nombre_estudiante", "cedula", "guardia_responsable", "estado_ingreso", "metodo"]
+    },
+    "pago": {
+      "title": "Pago",
+      "description": "Historial de cobros y mensualidades registradas",
+      "type": "object",
+      "properties": {
+        "estudiante_id": { "type": "string" },
+        "estudiante_nombre": { "type": "string" },
+        "cedula": { "type": "string" },
+        "mes_pagado": { "type": "string" },
+        "monto": { "type": "number" },
+        "metodo_pago": { "type": "string" },
+        "fecha_pago": { "type": "string" },
+        "fecha_vencimiento": { "type": "string" },
+        "registrado_por": { "type": "string" },
+        "comprobante": { "type": "string" }
+      },
+      "required": ["estudiante_id", "estudiante_nombre", "cedula", "monto", "fecha_pago"]
+    }
+  },
+  "firestore": {
+    "/estudiantes/{estudianteId}": {
+      "schema": "#/entities/estudiante",
+      "description": "Colección de estudiantes"
+    },
+    "/usuarios/{usuarioId}": {
+      "schema": "#/entities/usuario",
+      "description": "Colección de operadores y administradores"
+    },
+    "/accesos_registrados/{accesoId}": {
+      "schema": "#/entities/accesoLog",
+      "description": "Colección de accesos registrados"
+    },
+    "/pagos/{pagoId}": {
+      "schema": "#/entities/pago",
+      "description": "Colección de pagos de cuotas y pensiones"
+    }
+  }
+}

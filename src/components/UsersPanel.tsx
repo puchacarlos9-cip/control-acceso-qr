@@ -10,11 +10,6 @@ import {
   X,
   Lock,
   Clock,
-  AlertTriangle,
-  Copy,
-  CheckCircle2,
-  ExternalLink,
-  Flame,
 } from 'lucide-react';
 
 interface UsersPanelProps {
@@ -32,8 +27,6 @@ export const UsersPanel: React.FC<UsersPanelProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
-  const [rulesCopied, setRulesCopied] = useState(false);
 
   // Form state
   const [nombre, setNombre] = useState('');
@@ -102,25 +95,13 @@ export const UsersPanel: React.FC<UsersPanelProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-          <button
-            onClick={() => setIsRulesModalOpen(true)}
-            className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold px-4 py-3 rounded-2xl flex items-center justify-center gap-2 transition text-xs sm:text-sm whitespace-nowrap shadow-sm"
-            title="Ver solución a las advertencias de Firebase Console"
-          >
-            <Flame className="w-4 h-4 text-amber-400" />
-            <span>Reglas de Firebase</span>
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-          </button>
-
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-3 rounded-2xl flex items-center justify-center gap-2 transition shadow-lg shadow-purple-600/20 whitespace-nowrap text-sm"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Nuevo Personal</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="w-full sm:w-auto bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-3 rounded-2xl flex items-center justify-center gap-2 transition shadow-lg shadow-purple-600/20 whitespace-nowrap text-sm"
+        >
+          <UserPlus className="w-4 h-4" />
+          <span>Nuevo Personal</span>
+        </button>
       </div>
 
       {/* Search Input */}
@@ -415,130 +396,6 @@ export const UsersPanel: React.FC<UsersPanelProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: REGLAS DE FIREBASE Y RESOLUCIÓN DE ADVERTENCIA */}
-      {isRulesModalOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#18181b] border border-amber-500/30 w-full max-w-2xl p-6 sm:p-7 rounded-3xl shadow-2xl relative max-h-[92vh] overflow-y-auto">
-            <button
-              onClick={() => setIsRulesModalOpen(false)}
-              className="absolute top-5 right-5 text-zinc-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-3 text-amber-400 mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h3 className="text-lg sm:text-xl font-bold text-white">
-                  Advertencia de Firebase: Reglas de Seguridad
-                </h3>
-                <p className="text-xs text-amber-400/90 font-medium">
-                  ¿Por qué Firebase envió este mensaje y cómo solucionarlo?
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4 text-xs sm:text-sm text-zinc-300">
-              <div className="p-3.5 bg-zinc-900/90 border border-zinc-800 rounded-2xl space-y-2">
-                <p className="font-semibold text-white">
-                  🔍 Causa del mensaje:
-                </p>
-                <p className="text-zinc-400 leading-relaxed">
-                  Cuando creaste Firestore en Firebase, se inició en <strong className="text-amber-300">Modo de Prueba (Test Mode)</strong>, el cual viene con una fecha límite de 30 días de expiración (<code className="text-zinc-200 bg-zinc-800 px-1 py-0.5 rounded">request.time &lt; timestamp.date(2026, 8, 30)</code>). Al pasar esa fecha, Firebase bloquea el acceso a clientes y muestra la alerta en tu panel.
-                </p>
-              </div>
-
-              <div className="p-3.5 bg-emerald-950/20 border border-emerald-800/40 rounded-2xl space-y-2">
-                <p className="font-semibold text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Estado en esta aplicación:</span>
-                </p>
-                <p className="text-zinc-300 leading-relaxed text-xs">
-                  Las reglas para la base de datos de esta aplicación ya fueron actualizadas y desplegadas exitosamente en Firebase.
-                </p>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-white text-xs">
-                    Reglas permanentes para tu consola de Firebase:
-                  </span>
-                  <button
-                    onClick={() => {
-                      const rules = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`;
-                      navigator.clipboard.writeText(rules);
-                      setRulesCopied(true);
-                      onShowToast('Reglas copiadas al portapapeles', 'success');
-                      setTimeout(() => setRulesCopied(false), 3000);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-amber-300 rounded-xl text-xs font-semibold transition"
-                  >
-                    {rulesCopied ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>¡Copiado!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copiar Reglas</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <pre className="bg-black/80 border border-zinc-800 text-emerald-400 p-3.5 rounded-2xl font-mono text-[11px] sm:text-xs overflow-x-auto leading-relaxed">
-{`rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}`}
-                </pre>
-              </div>
-
-              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2 text-xs">
-                <p className="font-bold text-white">Pasos para quitar la alerta en Firebase Console:</p>
-                <ol className="list-decimal list-inside space-y-1.5 text-zinc-300">
-                  <li>
-                    Abre tu consola de Firebase en la sección de <strong className="text-white">Firestore Database</strong>.
-                  </li>
-                  <li>
-                    Haz clic en la pestaña <strong className="text-white">Reglas (Rules)</strong>.
-                  </li>
-                  <li>
-                    Borra el contenido actual, pega las reglas copiadas arriba y haz clic en el botón azul <strong className="text-white">Publicar (Publish)</strong>.
-                  </li>
-                </ol>
-              </div>
-
-              <div className="pt-2 flex flex-col sm:flex-row gap-3">
-                <a
-                  href="https://console.firebase.google.com/project/control-acceso-15da5/firestore/rules"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-3 px-4 rounded-xl transition text-center flex items-center justify-center gap-2 text-xs sm:text-sm"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Ir a Reglas en Firebase Console</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setIsRulesModalOpen(false)}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-white py-3 px-5 rounded-xl transition font-medium text-xs sm:text-sm"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}

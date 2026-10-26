@@ -4,17 +4,21 @@ import {
   UserPlus,
   Search,
   QrCode,
+  Pencil,
   Trash2,
   Download,
   X,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
+  Users,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface StudentsPanelProps {
   estudiantes: Estudiante[];
   onAddEstudiante: (est: Omit<Estudiante, 'id'>) => Promise<void>;
+  onUpdateEstudiante: (id: string, datos: Partial<Omit<Estudiante, 'id'>>) => Promise<void>;
   onDeleteEstudiante: (id: string) => void;
   onToggleEstadoPago: (id: string, nuevo: 'Pagado' | 'Pendiente') => void;
   onShowToast: (msg: string, type: 'success' | 'error' | 'info') => void;
@@ -23,6 +27,7 @@ interface StudentsPanelProps {
 export const StudentsPanel: React.FC<StudentsPanelProps> = ({
   estudiantes,
   onAddEstudiante,
+  onUpdateEstudiante,
   onDeleteEstudiante,
   onToggleEstadoPago,
   onShowToast,
@@ -31,29 +36,242 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
   const [filterEstado, setFilterEstado] = useState<'todos' | 'Pagado' | 'Pendiente'>('todos');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Form state
+  // Form state (Crear)
   const [nombre, setNombre] = useState('');
   const [apellidos, setApellidos] = useState('');
   const [cedula, setCedula] = useState('');
   const [estadoPago, setEstadoPago] = useState<'Pagado' | 'Pendiente'>('Pagado');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cedulaAvisoExceso, setCedulaAvisoExceso] = useState(false);
+  const [cedulaAvisoLetra, setCedulaAvisoLetra] = useState(false);
+
+  // Form state (Editar)
+  const [editingEstudiante, setEditingEstudiante] = useState<Estudiante | null>(null);
+  const [editNombre, setEditNombre] = useState('');
+  const [editApellidos, setEditApellidos] = useState('');
+  const [editCedula, setEditCedula] = useState('');
+  const [editEstadoPago, setEditEstadoPago] = useState<'Pagado' | 'Pendiente'>('Pagado');
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [editCedulaAvisoExceso, setEditCedulaAvisoExceso] = useState(false);
+  const [editCedulaAvisoLetra, setEditCedulaAvisoLetra] = useState(false);
 
   // QR modal state
   const [selectedQrEstudiante, setSelectedQrEstudiante] = useState<Estudiante | null>(null);
   const qrRef = useRef<HTMLDivElement>(null);
 
-  const handleCreateStudent = async (e: React.FormEvent) => {
+  // Handlers for Cedula input validation, non-numeric alert and overflow warning
+  const handleCedulaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.key === 'Backspace' ||
+      e.key === 'Delete' ||
+      e.key === 'Tab' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight' ||
+      e.key === 'Enter' ||
+      e.key === 'Escape'
+    ) {
+      setCedulaAvisoLetra(false);
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      return;
+    }
+    if (e.key.length === 1) {
+      if (!/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        setCedulaAvisoLetra(true);
+        setCedulaAvisoExceso(false);
+        onShowToast('⚠️ Solo se aceptan números', 'error');
+        return;
+      }
+      setCedulaAvisoLetra(false);
+      const target = e.currentTarget;
+      const hasSelection = (target.selectionEnd ?? 0) - (target.selectionStart ?? 0) > 0;
+      if (cedula.length >= 10 && !hasSelection) {
+        e.preventDefault();
+        setCedulaAvisoExceso(true);
+        onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+      } else {
+        setCedulaAvisoExceso(false);
+      }
+    }
+  };
+
+  const handleCedulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawVal = e.target.value;
+    if (/[^0-9]/.test(rawVal)) {
+      setCedulaAvisoLetra(true);
+      onShowToast('⚠️ Solo se aceptan números', 'error');
+    } else {
+      setCedulaAvisoLetra(false);
+    }
+
+    const numsOnly = rawVal.replace(/\D/g, '');
+    if (numsOnly.length > 10) {
+      setCedulaAvisoExceso(true);
+      onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+      setCedula(numsOnly.slice(0, 10));
+    } else {
+      setCedula(numsOnly);
+      if (numsOnly.length < 10) {
+        setCedulaAvisoExceso(false);
+      }
+    }
+  };
+
+  const handleCedulaPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text');
+    if (/[^0-9]/.test(pasted)) {
+      setCedulaAvisoLetra(true);
+      onShowToast('⚠️ Solo se aceptan números', 'error');
+    }
+    const numsOnly = pasted.replace(/\D/g, '');
+    const target = e.currentTarget;
+    const selectionLength = (target.selectionEnd ?? 0) - (target.selectionStart ?? 0);
+    const currentLength = cedula.length - selectionLength;
+    if (currentLength + numsOnly.length > 10) {
+      setCedulaAvisoExceso(true);
+      onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+    }
+  };
+
+  const handleEditCedulaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.key === 'Backspace' ||
+      e.key === 'Delete' ||
+      e.key === 'Tab' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight' ||
+      e.key === 'Enter' ||
+      e.key === 'Escape'
+    ) {
+      setEditCedulaAvisoLetra(false);
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      return;
+    }
+    if (e.key.length === 1) {
+      if (!/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        setEditCedulaAvisoLetra(true);
+        setEditCedulaAvisoExceso(false);
+        onShowToast('⚠️ Solo se aceptan números', 'error');
+        return;
+      }
+      setEditCedulaAvisoLetra(false);
+      const target = e.currentTarget;
+      const hasSelection = (target.selectionEnd ?? 0) - (target.selectionStart ?? 0) > 0;
+      if (editCedula.length >= 10 && !hasSelection) {
+        e.preventDefault();
+        setEditCedulaAvisoExceso(true);
+        onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+      } else {
+        setEditCedulaAvisoExceso(false);
+      }
+    }
+  };
+
+  const handleEditCedulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawVal = e.target.value;
+    if (/[^0-9]/.test(rawVal)) {
+      setEditCedulaAvisoLetra(true);
+      onShowToast('⚠️ Solo se aceptan números', 'error');
+    } else {
+      setEditCedulaAvisoLetra(false);
+    }
+
+    const numsOnly = rawVal.replace(/\D/g, '');
+    if (numsOnly.length > 10) {
+      setEditCedulaAvisoExceso(true);
+      onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+      setEditCedula(numsOnly.slice(0, 10));
+    } else {
+      setEditCedula(numsOnly);
+      if (numsOnly.length < 10) {
+        setEditCedulaAvisoExceso(false);
+      }
+    }
+  };
+
+  const handleEditCedulaPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text');
+    if (/[^0-9]/.test(pasted)) {
+      setEditCedulaAvisoLetra(true);
+      onShowToast('⚠️ Solo se aceptan números', 'error');
+    }
+    const numsOnly = pasted.replace(/\D/g, '');
+    const target = e.currentTarget;
+    const selectionLength = (target.selectionEnd ?? 0) - (target.selectionStart ?? 0);
+    const currentLength = editCedula.length - selectionLength;
+    if (currentLength + numsOnly.length > 10) {
+      setEditCedulaAvisoExceso(true);
+      onShowToast('⚠️ Está poniendo números de más de lo que contiene una cédula (máximo 10 dígitos)', 'error');
+    }
+  };
+
+  const handleOpenEditModal = (est: Estudiante) => {
+    setEditingEstudiante(est);
+    setEditNombre(est.nombre);
+    setEditApellidos(est.apellidos);
+    setEditCedula(est.cedula);
+    setEditEstadoPago(est.estado_pago);
+    setEditCedulaAvisoExceso(false);
+    setEditCedulaAvisoLetra(false);
+  };
+
+  const handleSaveEditStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanNombre = nombre.trim();
-    const cleanApellidos = apellidos.trim();
-    const cleanCedula = cedula.trim();
+    if (!editingEstudiante) return;
+
+    const cleanNombre = editNombre.trim();
+    const cleanApellidos = editApellidos.trim();
+    const cleanCedula = editCedula.replace(/\D/g, '').slice(0, 10);
 
     if (!cleanNombre || !cleanApellidos || !cleanCedula) {
       return onShowToast('Por favor completa el nombre, apellidos y cédula del estudiante', 'error');
     }
 
-    if (cleanCedula.length < 6) {
-      return onShowToast('El número de cédula debe tener al menos 6 dígitos', 'error');
+    if (cleanCedula.length !== 10) {
+      return onShowToast('La cédula debe contener exactamente 10 dígitos numéricos', 'error');
+    }
+
+    // Check duplicate cédula in other students
+    const duplicate = estudiantes.some(
+      (item) => item.id !== editingEstudiante.id && item.cedula === cleanCedula
+    );
+    if (duplicate) {
+      return onShowToast('Ya existe otro estudiante registrado con esa cédula', 'error');
+    }
+
+    setIsEditSubmitting(true);
+    try {
+      await onUpdateEstudiante(editingEstudiante.id, {
+        nombre: cleanNombre,
+        apellidos: cleanApellidos,
+        cedula: cleanCedula,
+        estado_pago: editEstadoPago,
+      });
+      setEditingEstudiante(null);
+    } catch (err) {
+      onShowToast('Error al actualizar estudiante', 'error');
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  };
+
+  const handleCreateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanNombre = nombre.trim();
+    const cleanApellidos = apellidos.trim();
+    const cleanCedula = cedula.replace(/\D/g, '').slice(0, 10);
+
+    if (!cleanNombre || !cleanApellidos || !cleanCedula) {
+      return onShowToast('Por favor completa el nombre, apellidos y cédula del estudiante', 'error');
+    }
+
+    if (cleanCedula.length !== 10) {
+      return onShowToast('La cédula debe contener exactamente 10 dígitos numéricos', 'error');
     }
 
     // Check duplicate cedula
@@ -155,7 +373,11 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
         </div>
 
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {
+            setCedulaAvisoExceso(false);
+            setCedulaAvisoLetra(false);
+            setIsAddModalOpen(true);
+          }}
           className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-5 py-3 rounded-2xl flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20 whitespace-nowrap text-sm"
         >
           <UserPlus className="w-4 h-4" />
@@ -235,8 +457,22 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
             <tbody className="divide-y divide-zinc-800/50">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-10 text-zinc-500">
-                    No se encontraron estudiantes con los criterios seleccionados.
+                  <td colSpan={5} className="text-center py-14 text-zinc-500">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 mb-1">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <p className="font-semibold text-zinc-300 text-sm">
+                        {estudiantes.length === 0
+                          ? 'No hay estudiantes registrados en Firebase'
+                          : 'No se encontraron estudiantes con los criterios seleccionados'}
+                      </p>
+                      <p className="text-xs text-zinc-500 max-w-sm text-center">
+                        {estudiantes.length === 0
+                          ? 'La base de datos está vacía en este momento. Haz clic en "Registrar Estudiante" para agregar un nuevo registro en tiempo real.'
+                          : 'Prueba buscando con otra cédula o cambiando el filtro.'}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -286,13 +522,22 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
                         </button>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => onDeleteEstudiante(est.id)}
-                          className="p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition"
-                          title="Eliminar Registro"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleOpenEditModal(est)}
+                            className="p-2 rounded-xl text-zinc-400 hover:text-amber-400 hover:bg-amber-400/10 transition"
+                            title="Modificar datos del estudiante"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onDeleteEstudiante(est.id)}
+                            className="p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition"
+                            title="Eliminar Registro"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -306,8 +551,17 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
       {/* VIEW 2: MOBILE CARDS */}
       <div className="md:hidden grid grid-cols-1 gap-3">
         {filtered.length === 0 ? (
-          <div className="text-center py-10 bg-zinc-900/50 rounded-2xl border border-zinc-800 text-zinc-500 text-sm">
-            No hay estudiantes que coincidan con la búsqueda.
+          <div className="text-center py-10 bg-zinc-900/50 rounded-2xl border border-zinc-800 text-zinc-400 text-sm p-6 space-y-1">
+            <p className="font-semibold text-zinc-300">
+              {estudiantes.length === 0
+                ? 'No hay estudiantes registrados en Firebase'
+                : 'No hay estudiantes que coincidan con la búsqueda'}
+            </p>
+            <p className="text-xs text-zinc-500">
+              {estudiantes.length === 0
+                ? 'La base de datos está vacía. Haz clic en "Registrar Estudiante" para agregar uno.'
+                : 'Prueba buscando con otra cédula o nombre.'}
+            </p>
           </div>
         ) : (
           filtered.map((est) => {
@@ -346,18 +600,27 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60">
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60 gap-2">
                   <button
                     onClick={() => setSelectedQrEstudiante(est)}
-                    className="flex-1 mr-2 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition text-xs font-bold"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition text-xs font-bold"
                   >
                     <QrCode className="w-4 h-4" />
                     <span>Ver Carnet QR</span>
                   </button>
 
                   <button
+                    onClick={() => handleOpenEditModal(est)}
+                    className="p-2.5 rounded-xl text-zinc-400 hover:text-amber-400 hover:bg-amber-400/10 border border-zinc-800 transition"
+                    title="Modificar Datos"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+
+                  <button
                     onClick={() => onDeleteEstudiante(est.id)}
-                    className="p-2.5 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition"
+                    className="p-2.5 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 border border-zinc-800 transition"
+                    title="Eliminar Estudiante"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -373,7 +636,11 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
         <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-[#18181b] border border-zinc-800 w-full max-w-lg p-6 sm:p-7 rounded-3xl shadow-2xl relative max-h-[92vh] overflow-y-auto">
             <button
-              onClick={() => setIsAddModalOpen(false)}
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setCedulaAvisoExceso(false);
+                setCedulaAvisoLetra(false);
+              }}
               className="absolute top-5 right-5 text-zinc-400 hover:text-white"
             >
               <X className="w-5 h-5" />
@@ -415,17 +682,70 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
               </div>
 
               <div>
-                <label className="block text-zinc-400 text-xs font-medium mb-1.5">
-                  Cédula / Identificación *
-                </label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-zinc-400 text-xs font-medium">
+                    Cédula / Identificación *
+                  </label>
+                  <span
+                    className={`text-[11px] font-mono transition-colors ${
+                      cedulaAvisoLetra || cedulaAvisoExceso
+                        ? 'text-amber-400 font-bold'
+                        : cedula.length === 10
+                        ? 'text-emerald-400 font-semibold'
+                        : 'text-zinc-500'
+                    }`}
+                  >
+                    {cedula.length}/10 dígitos
+                  </span>
+                </div>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   required
                   value={cedula}
-                  onChange={(e) => setCedula(e.target.value)}
+                  onKeyDown={handleCedulaKeyDown}
+                  onChange={handleCedulaChange}
+                  onPaste={handleCedulaPaste}
                   placeholder="Ej: 1105432190"
-                  className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm font-mono text-white focus:outline-none focus:border-emerald-500"
+                  className={`w-full bg-zinc-900 border rounded-xl px-3.5 py-3 text-sm font-mono text-white focus:outline-none tracking-wider transition ${
+                    cedulaAvisoLetra
+                      ? 'border-amber-500 ring-2 ring-amber-500/20'
+                      : cedulaAvisoExceso
+                      ? 'border-amber-500 ring-2 ring-amber-500/20'
+                      : 'border-zinc-700/80 focus:border-emerald-500'
+                  }`}
                 />
+
+                {cedulaAvisoLetra ? (
+                  <div className="flex items-start gap-2.5 p-3 mt-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs animate-shake">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-amber-400 block text-xs">
+                        Solo se aceptan números
+                      </span>
+                      <span className="text-zinc-300 text-[11px] leading-tight block mt-0.5">
+                        El número de cédula solo debe contener dígitos numéricos (0-9). No se permiten letras ni símbolos.
+                      </span>
+                    </div>
+                  </div>
+                ) : cedulaAvisoExceso ? (
+                  <div className="flex items-start gap-2.5 p-3 mt-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs animate-shake">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-amber-400 block">
+                        ¡Límite de dígitos alcanzado!
+                      </span>
+                      <span className="text-zinc-300 text-[11px] leading-tight block mt-0.5">
+                        Está poniendo números de más de lo que contiene una cédula. La cédula ecuatoriana contiene exactamente 10 dígitos.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Solo números (exactamente 10 dígitos)
+                  </p>
+                )}
               </div>
 
               <div>
@@ -458,6 +778,170 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({
                   className="w-full sm:flex-1 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 py-3 rounded-xl transition font-bold shadow-lg shadow-emerald-500/20 text-sm disabled:opacity-50"
                 >
                   {isSubmitting ? 'Guardando...' : 'Generar Credencial y Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDITAR DATOS DEL ESTUDIANTE */}
+      {editingEstudiante && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#18181b] border border-zinc-800 w-full max-w-lg p-6 sm:p-7 rounded-3xl shadow-2xl relative">
+            <button
+              onClick={() => {
+                setEditingEstudiante(null);
+                setEditCedulaAvisoExceso(false);
+                setEditCedulaAvisoLetra(false);
+              }}
+              className="absolute top-5 right-5 text-zinc-400 hover:text-white p-2"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-400">
+                <Pencil className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">
+                  Modificar Estudiante
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Edita los datos personales, cédula o estado de cuota
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveEditStudent} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-medium mb-1.5">
+                    Nombres *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editNombre}
+                    onChange={(e) => setEditNombre(e.target.value)}
+                    placeholder="Ej: Juan Carlos"
+                    className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 text-xs font-medium mb-1.5">
+                    Apellidos *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editApellidos}
+                    onChange={(e) => setEditApellidos(e.target.value)}
+                    placeholder="Ej: Castillo"
+                    className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-zinc-400 text-xs font-medium">
+                    Cédula / Identificación *
+                  </label>
+                  <span
+                    className={`text-[11px] font-mono transition-colors ${
+                      editCedulaAvisoLetra || editCedulaAvisoExceso
+                        ? 'text-amber-400 font-bold'
+                        : editCedula.length === 10
+                        ? 'text-amber-400 font-semibold'
+                        : 'text-zinc-500'
+                    }`}
+                  >
+                    {editCedula.length}/10 dígitos
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  required
+                  value={editCedula}
+                  onKeyDown={handleEditCedulaKeyDown}
+                  onChange={handleEditCedulaChange}
+                  onPaste={handleEditCedulaPaste}
+                  placeholder="Ej: 1105432190"
+                  className={`w-full bg-zinc-900 border rounded-xl px-3.5 py-3 text-sm font-mono text-white focus:outline-none tracking-wider transition ${
+                    editCedulaAvisoLetra
+                      ? 'border-amber-500 ring-2 ring-amber-500/20'
+                      : editCedulaAvisoExceso
+                      ? 'border-amber-500 ring-2 ring-amber-500/20'
+                      : 'border-zinc-700/80 focus:border-amber-500'
+                  }`}
+                />
+
+                {editCedulaAvisoLetra ? (
+                  <div className="flex items-start gap-2.5 p-3 mt-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs animate-shake">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-amber-400 block text-xs">
+                        Solo se aceptan números
+                      </span>
+                      <span className="text-zinc-300 text-[11px] leading-tight block mt-0.5">
+                        El número de cédula solo debe contener dígitos numéricos (0-9). No se permiten letras ni símbolos.
+                      </span>
+                    </div>
+                  </div>
+                ) : editCedulaAvisoExceso ? (
+                  <div className="flex items-start gap-2.5 p-3 mt-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs animate-shake">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-amber-400 block">
+                        ¡Límite de dígitos alcanzado!
+                      </span>
+                      <span className="text-zinc-300 text-[11px] leading-tight block mt-0.5">
+                        Está poniendo números de más de lo que contiene una cédula. La cédula ecuatoriana contiene exactamente 10 dígitos.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Solo números (exactamente 10 dígitos)
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-xs font-medium mb-1.5">
+                  Estado de Cuota Mensual
+                </label>
+                <select
+                  value={editEstadoPago}
+                  onChange={(e) =>
+                    setEditEstadoPago(e.target.value as 'Pagado' | 'Pendiente')
+                  }
+                  className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="Pagado">✅ Cuota Al Día (Ingreso Habilitado)</option>
+                  <option value="Pendiente">❌ En Mora (Acceso Bloqueado)</option>
+                </select>
+              </div>
+
+              <div className="pt-4 flex flex-col-reverse sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingEstudiante(null)}
+                  className="w-full sm:flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-3 rounded-xl transition font-medium text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditSubmitting}
+                  className="w-full sm:flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 py-3 rounded-xl transition font-bold shadow-lg shadow-amber-500/20 text-sm disabled:opacity-50"
+                >
+                  {isEditSubmitting ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
             </form>
